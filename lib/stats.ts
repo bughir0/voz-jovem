@@ -173,6 +173,14 @@ function csvCell(value: string | number | null | undefined): string {
     : single;
 }
 
+/**
+ * O Excel converte 20/08/2026 em data serial e, se a coluna estiver estreita,
+ * mostra só ####. Uma fórmula de texto força o valor a aparecer inteiro.
+ */
+function excelText(value: string): string {
+  return `="${value.replace(/"/g, '""')}"`;
+}
+
 /** Numa pergunta derivada o texto de "Outro" fica guardado na pergunta origem. */
 function otherSourceId(question: Question): string | null {
   if (question.type === "derived") return question.sourceQuestionId;
@@ -189,11 +197,13 @@ function buildColumns(questions: Question[]): CsvColumn[] {
     { header: "Nº", value: (_response, index) => index + 1 },
     {
       header: "Data",
-      value: (response) => csvDate.format(new Date(response.createdAt)),
+      value: (response) =>
+        excelText(csvDate.format(new Date(response.createdAt))),
     },
     {
       header: "Hora",
-      value: (response) => csvTime.format(new Date(response.createdAt)),
+      value: (response) =>
+        excelText(csvTime.format(new Date(response.createdAt))),
     },
   ];
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getFormStatus, insertResponse, listQuestions } from "@/lib/db";
+import { getFormStatus, insertResponse, listQuestions, claimSubmitKey, isSubmitKey } from "@/lib/db";
 import {
   isQuestionApplicable,
   optionsFor,
@@ -73,6 +73,10 @@ export async function POST(request: Request) {
 
   const body = (payload ?? {}) as Record<string, unknown>;
 
+  if (!isSubmitKey(body.submitKey)) {
+    return NextResponse.json({ error: "Envio inválido." }, { status: 400 });
+  }
+
   const questions = await listQuestions();
   if (questions.length === 0)
     return NextResponse.json(
@@ -103,6 +107,11 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+  }
+
+  const claimed = await claimSubmitKey(body.submitKey);
+  if (!claimed) {
+    return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
   }
 
   try {

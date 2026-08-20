@@ -73,6 +73,8 @@ export function FormFlow({ questions }: { questions: Question[] }) {
   const [answers, setAnswers] = useState<Answers>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const submitKey = useRef(crypto.randomUUID());
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -105,13 +107,19 @@ export function FormFlow({ questions }: { questions: Question[] }) {
   );
 
   const submit = useCallback(async (data: Answers) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     setError(null);
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
     try {
       const response = await fetch("/api/responses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: data }),
+        body: JSON.stringify({ answers: data, submitKey: submitKey.current }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
@@ -121,6 +129,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
       }
       setPhase("done");
     } catch (submitError) {
+      submittingRef.current = false;
       setError(
         submitError instanceof Error
           ? submitError.message
@@ -133,6 +142,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const goNext = useCallback(
     (data: Answers = answers, from: number = step) => {
+      if (submittingRef.current) return;
       const message = validate(from, data);
       if (message) {
         setError(message);
@@ -205,6 +215,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const handlePick = useCallback(
     (question: Question, answer: Answer, index: number) => {
+      if (submittingRef.current) return;
       const next = merge(answers, question, answer);
       setAnswers(next);
       setError(null);
@@ -223,15 +234,18 @@ export function FormFlow({ questions }: { questions: Question[] }) {
       event.preventDefault();
       if (phase === "intro") {
         setPhase("form");
-      } else if (phase === "form" && !submitting) {
+      } else if (phase === "form" && !submittingRef.current) {
         goNext();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [goNext, phase, submitting]);
+  }, [goNext, phase]);
 
   const restart = useCallback(() => {
+    submittingRef.current = false;
+    submitKey.current = crypto.randomUUID();
+    setSubmitting(false);
     setAnswers({});
     setStep(0);
     setDirection(1);

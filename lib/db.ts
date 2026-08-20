@@ -75,18 +75,25 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL
 )`;
 
+const SCHEMA_SUBMIT_KEYS = `
+CREATE TABLE IF NOT EXISTS submit_keys (
+  key TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL
+)`;
+
 // O módulo é reavaliado a cada hot-reload do Next em desenvolvimento; guardar a
 // conexão no globalThis evita abrir dezenas de handles no mesmo arquivo SQLite.
 // O sufixo de versão descarta conexões antigas quando o esquema muda.
-const cache = globalThis as unknown as { __vozJovemDbV3?: Promise<Client> };
+const cache = globalThis as unknown as { __vozJovemDbV4?: Promise<Client> };
 
 function connect(): Promise<Client> {
-  if (!cache.__vozJovemDbV3) {
-    cache.__vozJovemDbV3 = (async () => {
+  if (!cache.__vozJovemDbV4) {
+    cache.__vozJovemDbV4 = (async () => {
       const client = buildClient();
       await client.execute(SCHEMA_QUESTIONS);
       await client.execute(SCHEMA_RESPONSES);
       await client.execute(SCHEMA_SETTINGS);
+      await client.execute(SCHEMA_SUBMIT_KEYS);
       await client.execute(
         "CREATE INDEX IF NOT EXISTS idx_survey_responses_created_at ON survey_responses (created_at DESC)",
       );
@@ -95,7 +102,7 @@ function connect(): Promise<Client> {
       return client;
     })();
   }
-  return cache.__vozJovemDbV3;
+  return cache.__vozJovemDbV4;
 }
 
 async function seedQuestions(client: Client): Promise<void> {
@@ -383,6 +390,27 @@ export async function insertResponse(data: {
   });
 
   return record;
+}
+
+const SUBMIT_KEY_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isSubmitKey(value: unknown): value is string {
+  return typeof value === "string" && SUBMIT_KEY_PATTERN.test(value);
+}
+
+/**
+ * Garante que a mesma chave só grave uma resposta. Devolve false quando o
+ * envio já foi aceito — o segundo POST (clique duplo, Enter + botão) é
+ * ignorado.
+ */
+export async function claimSubmitKey(key: string): Promise<boolean> {
+  const db = await connect();
+  const result = await db.execute({
+    sql: "INSERT OR IGNORE INTO submit_keys (key, created_at) VALUES (?, ?)",
+    args: [key, new Date().toISOString()],
+  });
+  return result.rowsAffected > 0;
 }
 
 export async function listResponses(): Promise<StoredResponse[]> {
