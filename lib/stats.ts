@@ -143,39 +143,115 @@ export function buildStats(
   };
 }
 
+const CSV_SEPARATOR = ";";
+const TIME_ZONE = "America/Sao_Paulo";
+
+const csvDate = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: TIME_ZONE,
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+const csvTime = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+/**
+ * Uma célula nunca pode conter quebra de linha: o texto livre da pesquisa é
+ * digitado em várias linhas e isso partiria a resposta em várias linhas da
+ * planilha. As aspas só entram quando o conteúdo realmente precisa delas.
+ */
+function csvCell(value: string | number | null | undefined): string {
+  const text = value === null || value === undefined ? "" : String(value);
+  const single = text.replace(/\s*\r?\n\s*/g, " / ").trim();
+  return /["\r\n]|;/.test(single)
+    ? `"${single.replace(/"/g, '""')}"`
+    : single;
+}
+
+/** Numa pergunta derivada o texto de "Outro" fica guardado na pergunta origem. */
+function otherSourceId(question: Question): string | null {
+  if (question.type === "derived") return question.sourceQuestionId;
+  return question.allowOther ? question.id : null;
+}
+
+type CsvColumn = {
+  header: string;
+  value: (response: StoredResponse, index: number) => string | number;
+};
+
+function buildColumns(questions: Question[]): CsvColumn[] {
+  const columns: CsvColumn[] = [
+    { header: "Nº", value: (_response, index) => index + 1 },
+    {
+      header: "Data",
+      value: (response) => csvDate.format(new Date(response.createdAt)),
+    },
+    {
+      header: "Hora",
+      value: (response) => csvTime.format(new Date(response.createdAt)),
+    },
+    { header: "Nome", value: (response) => response.name },
+    { header: "E-mail", value: (response) => response.email },
+  ];
+
+  questions.forEach((question, index) => {
+    const number = index + 1;
+    const suffix = question.archived ? " (arquivada)" : "";
+
+    columns.push({
+      header: `${number}. ${question.title}${suffix}`,
+      value: (response) =>
+        formatAnswer(question, response.answers[question.id], {
+          withOtherText: false,
+        }),
+    });
+
+    // O texto de "Outro" ganha coluna própria para não se misturar com a
+    // alternativa marcada, o que atrapalharia contar as respostas.
+    const sourceId = otherSourceId(question);
+    if (sourceId) {
+      columns.push({
+        header: `${number}. Outro (texto)`,
+        value: (response) => {
+          const marked = response.answers[question.id]?.choices ?? [];
+          if (!marked.includes(OTHER_CHOICE)) return "";
+          return response.answers[sourceId]?.other?.trim() ?? "";
+        },
+      });
+    }
+  });
+
+  columns.push({ header: "ID da resposta", value: (response) => response.id });
+
+  return columns;
+}
+
 export function toCsv(
   questions: Question[],
   responses: StoredResponse[],
 ): string {
-  const headers = [
-    "ID",
-    "Data/Hora",
-    "Nome",
-    "E-mail",
-    ...questions.map(
-      (question, index) =>
-        `${index + 1}. ${question.title}${question.archived ? " (arquivada)" : ""}`,
-    ),
-  ];
-
-  const escape = (value: string | number | null) => {
-    const text = value === null ? "" : String(value);
-    return `"${text.replace(/"/g, '""')}"`;
-  };
-
-  const lines = responses.map((response) =>
-    [
-      response.id,
-      new Date(response.createdAt).toLocaleString("pt-BR"),
-      response.name,
-      response.email,
-      ...questions.map((question) =>
-        formatAnswer(question, response.answers[question.id]),
-      ),
-    ]
-      .map(escape)
-      .join(";"),
+  const columns = buildColumns(questions);
+  // Da mais antiga para a mais recente, para a numeração acompanhar a coleta.
+  const ordered = [...responses].sort((a, b) =>
+    a.createdAt.localeCompare(b.createdAt),
   );
 
-  return [headers.map(escape).join(";"), ...lines].join("\r\n");
+  const header = columns.map((column) => csvCell(column.header));
+  const lines = ordered.map((response, index) =>
+    columns
+      .map((column) => csvCell(column.value(response, index)))
+      .join(CSV_SEPARATOR),
+  );
+
+  // `sep=` avisa o Excel qual é o separador, independente do idioma do sistema.
+  return [
+    `sep=${CSV_SEPARATOR}`,
+    header.join(CSV_SEPARATOR),
+    ...lines,
+  ].join("\r\n");
 }

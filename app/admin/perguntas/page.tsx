@@ -1,4 +1,3 @@
-import { AuroraBackground } from "@/components/AuroraBackground";
 import { QuestionManager } from "@/components/admin/QuestionManager";
 import { requireAdmin } from "@/lib/auth";
 import { listQuestions } from "@/lib/db";
@@ -12,8 +11,7 @@ export default async function ManageQuestionsPage() {
   const questions = await listQuestions({ includeArchived: true });
 
   return (
-    <main className="relative min-h-screen">
-      <AuroraBackground />
+    <main className="min-h-dvh">
       <QuestionManager questions={questions} />
     </main>
   );

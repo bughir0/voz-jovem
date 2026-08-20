@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
+import { useId } from "react";
 import { scaleValues } from "@/lib/question-utils";
 import type { Question } from "@/lib/types";
 
@@ -14,73 +15,63 @@ export function ScaleField({
   onChange: (value: number) => void;
 }) {
   const values = scaleValues(question);
+  const reduced = useReducedMotion();
+  const indicatorId = useId();
 
   return (
     <div>
-      <div className="flex items-stretch gap-2 sm:gap-3">
+      <div className="flex items-stretch gap-1.5 sm:gap-2">
         {values.map((item, index) => {
           const active = value === item;
-          const endLabel =
-            index === 0
-              ? question.scaleMinLabel
-              : index === values.length - 1
-                ? question.scaleMaxLabel
-                : null;
 
           return (
             <motion.button
               key={item}
               type="button"
               onClick={() => onChange(item)}
-              initial={{ opacity: 0, y: 18, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              initial={{ opacity: 0, y: reduced ? 0 : 12 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
-                delay: Math.min(index, 10) * 0.06,
-                type: "spring",
-                stiffness: 260,
-                damping: 18,
+                delay: Math.min(index, 10) * 0.04,
+                duration: 0.32,
+                ease: [0.22, 1, 0.36, 1],
               }}
-              whileHover={{ y: -6, scale: 1.04 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.96 }}
               aria-pressed={active}
-              className={`flex flex-1 cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 px-1 py-4 transition-colors ${
+              className={`relative flex min-h-14 flex-1 cursor-pointer items-center justify-center rounded-xl border transition-colors ${
                 active
-                  ? "border-brand-500 bg-brand-50 shadow-[0_18px_40px_-18px_rgba(115,80,240,0.8)]"
-                  : "border-brand-100 bg-white/80 hover:border-brand-300"
+                  ? "border-brand-600"
+                  : "border-line bg-surface hover:border-line-strong"
               }`}
             >
+              {active && (
+                <motion.span
+                  layoutId={indicatorId}
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  className="absolute inset-0 rounded-xl bg-brand-600"
+                />
+              )}
               <span
-                className={`grid h-11 w-11 place-items-center rounded-full text-lg font-extrabold transition-colors ${
-                  active
-                    ? "bg-gradient-to-br from-brand-500 to-accent-500 text-white"
-                    : "bg-brand-50 text-brand-600"
+                className={`tnum relative text-lg font-semibold ${
+                  active ? "text-white" : "text-ink-700"
                 }`}
               >
                 {item}
               </span>
-              {endLabel && (
-                <span
-                  className={`text-center text-[0.68rem] leading-tight font-semibold sm:text-xs ${
-                    active ? "text-brand-700" : "text-ink-500"
-                  }`}
-                >
-                  {endLabel}
-                </span>
-              )}
             </motion.button>
           );
         })}
       </div>
 
       {(question.scaleMinLabel || question.scaleMaxLabel) && (
-        <div className="mt-4 flex justify-between text-xs font-semibold text-ink-300">
-          <span>
+        <div className="mt-3 flex justify-between gap-4 text-xs text-ink-500">
+          <span className="max-w-[45%]">
             {question.scaleMin}
-            {question.scaleMinLabel ? ` — ${question.scaleMinLabel}` : ""}
+            {question.scaleMinLabel ? ` · ${question.scaleMinLabel}` : ""}
           </span>
-          <span>
+          <span className="max-w-[45%] text-right">
             {question.scaleMax}
-            {question.scaleMaxLabel ? ` — ${question.scaleMaxLabel}` : ""}
+            {question.scaleMaxLabel ? ` · ${question.scaleMaxLabel}` : ""}
           </span>
         </div>
       )}

@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import { insertResponse, listQuestions } from "@/lib/db";
+import { getFormStatus, insertResponse, listQuestions } from "@/lib/db";
 import {
   isQuestionApplicable,
   optionsFor,
   scaleValues,
   validateAnswer,
 } from "@/lib/question-utils";
-import { OTHER_CHOICE, type Answer, type Answers, type Question } from "@/lib/types";
+import {
+  FORM_STATUS_NOTICE,
+  OTHER_CHOICE,
+  type Answer,
+  type Answers,
+  type Question,
+} from "@/lib/types";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
@@ -49,6 +55,17 @@ function sanitize(
 }
 
 export async function POST(request: Request) {
+  // Quem já tinha o formulário aberto na tela quando ele foi pausado ou
+  // encerrado precisa saber por que o envio não foi aceito.
+  const status = await getFormStatus();
+  if (status !== "open") {
+    const notice = FORM_STATUS_NOTICE[status];
+    return NextResponse.json(
+      { error: `${notice.title}. ${notice.text}` },
+      { status: 403 },
+    );
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();

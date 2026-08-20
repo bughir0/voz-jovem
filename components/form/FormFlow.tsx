@@ -8,7 +8,6 @@ import {
   AlertIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
-  SparkIcon,
   SpinnerIcon,
 } from "@/components/icons";
 import { Hero } from "./Hero";
@@ -21,18 +20,55 @@ import { SuccessScreen } from "./SuccessScreen";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 const slide = {
-  enter: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? 70 : -70,
-    filter: "blur(6px)",
-  }),
-  center: { opacity: 1, x: 0, filter: "blur(0px)" },
-  exit: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? -70 : 70,
-    filter: "blur(6px)",
-  }),
+  enter: (direction: number) => ({ opacity: 0, x: direction > 0 ? 40 : -40 }),
+  center: { opacity: 1, x: 0 },
+  exit: (direction: number) => ({ opacity: 0, x: direction > 0 ? -40 : 40 }),
 };
+
+function Actions({
+  isLast,
+  submitting,
+  onBack,
+  onNext,
+}: {
+  isLast: boolean;
+  submitting: boolean;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-semibold text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-700 sm:px-4"
+      >
+        <ArrowLeftIcon className="h-4 w-4" />
+        Voltar
+      </button>
+
+      <motion.button
+        type="button"
+        onClick={onNext}
+        disabled={submitting}
+        whileTap={{ scale: 0.98 }}
+        className="group ml-auto inline-flex min-h-13 flex-1 cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-brand-700 px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70 sm:flex-none sm:px-8"
+      >
+        {submitting ? (
+          <>
+            <SpinnerIcon className="h-4 w-4 animate-spin" />
+            Enviando...
+          </>
+        ) : (
+          <>
+            {isLast ? "Enviar respostas" : "Continuar"}
+            <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </>
+        )}
+      </motion.button>
+    </div>
+  );
+}
 
 /** A etapa 0 é a identificação; as seguintes são as perguntas cadastradas. */
 export function FormFlow({ questions }: { questions: Question[] }) {
@@ -241,18 +277,13 @@ export function FormFlow({ questions }: { questions: Question[] }) {
   }
 
   if (phase === "intro") {
-    return (
-      <Hero onStart={() => setPhase("form")} total={questions.length} />
-    );
+    return <Hero onStart={() => setPhase("form")} total={questions.length} />;
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-24 sm:px-6 sm:pt-10">
-      <header className="mb-6 flex items-center gap-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-white">
-          <SparkIcon className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur">
+        <div className="mx-auto w-full max-w-2xl px-4 py-3 sm:px-6 sm:py-4">
           <ProgressBar
             current={step + 1}
             total={totalSteps}
@@ -261,147 +292,111 @@ export function FormFlow({ questions }: { questions: Question[] }) {
                 ? "Identificação"
                 : `Pergunta ${step} de ${questions.length}`
             }
+            onSelect={(index) => {
+              setDirection(-1);
+              setStep(index);
+              setError(null);
+            }}
           />
         </div>
       </header>
 
-      <motion.div
-        layout
-        transition={{ type: "spring", stiffness: 150, damping: 22 }}
-        className="glass-card rounded-[1.75rem] p-6 sm:p-9"
-      >
-        <AnimatePresence mode="wait" custom={direction} initial={false}>
-          <motion.div
-            key={step}
-            custom={direction}
-            variants={slide}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {step === 0 ? (
-              <QuestionShell
-                number={1}
-                total={totalSteps}
-                title="Antes de começar, quem é você?"
-                hint="Nome e e-mail são obrigatórios e ficam visíveis apenas para a organização da pesquisa."
-              >
-                <div className="space-y-4">
-                  <TextField
-                    label="Nome completo"
-                    value={identity.name}
-                    onChange={(value) => {
-                      setIdentity((prev) => ({ ...prev, name: value }));
-                      setError(null);
-                    }}
-                    placeholder="Ex.: Maria Oliveira"
-                    autoFocus
-                  />
-                  <TextField
-                    label="E-mail"
-                    type="email"
-                    value={identity.email}
-                    onChange={(value) => {
-                      setIdentity((prev) => ({ ...prev, email: value }));
-                      setError(null);
-                    }}
-                    placeholder="Ex.: maria@email.com"
-                  />
-                </div>
-              </QuestionShell>
-            ) : (
-              current && (
-                <QuestionStep
-                  question={current}
-                  number={step + 1}
-                  total={totalSteps}
-                  answers={answers}
-                  answer={answers[current.id]}
-                  onChange={(answer) => handleChange(current, answer)}
-                  onPick={(answer) => handlePick(current, answer, step)}
-                />
-              )
-            )}
-          </motion.div>
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {error && (
+      <main className="mx-auto w-full max-w-2xl px-4 pt-6 pb-36 sm:px-6 sm:pt-10 sm:pb-16">
+        <motion.div
+          layout
+          transition={{ type: "spring", stiffness: 170, damping: 24 }}
+          className="card rounded-2xl p-5 sm:p-8"
+        >
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
             <motion.div
-              initial={{ opacity: 0, y: -8, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: -8, height: 0 }}
-              className="mt-5 flex items-center gap-2 rounded-xl bg-accent-500/10 px-4 py-3 text-sm font-semibold text-accent-500"
+              key={step}
+              custom={direction}
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              <AlertIcon className="h-4 w-4 shrink-0" />
-              {error}
+              {step === 0 ? (
+                <QuestionShell
+                  number={1}
+                  total={totalSteps}
+                  title="Antes de começar, quem é você?"
+                  hint="Nome e e-mail são obrigatórios e ficam visíveis apenas para a organização da pesquisa."
+                >
+                  <div className="space-y-4">
+                    <TextField
+                      label="Nome completo"
+                      value={identity.name}
+                      onChange={(value) => {
+                        setIdentity((prev) => ({ ...prev, name: value }));
+                        setError(null);
+                      }}
+                      placeholder="Ex.: Maria Oliveira"
+                      autoFocus
+                    />
+                    <TextField
+                      label="E-mail"
+                      type="email"
+                      value={identity.email}
+                      onChange={(value) => {
+                        setIdentity((prev) => ({ ...prev, email: value }));
+                        setError(null);
+                      }}
+                      placeholder="Ex.: maria@email.com"
+                    />
+                  </div>
+                </QuestionShell>
+              ) : (
+                current && (
+                  <QuestionStep
+                    question={current}
+                    number={step + 1}
+                    total={totalSteps}
+                    answers={answers}
+                    answer={answers[current.id]}
+                    onChange={(answer) => handleChange(current, answer)}
+                    onPick={(answer) => handlePick(current, answer, step)}
+                  />
+                )
+              )}
             </motion.div>
-          )}
-        </AnimatePresence>
+          </AnimatePresence>
 
-        <div className="mt-8 flex items-center justify-between gap-3">
-          <motion.button
-            type="button"
-            onClick={goBack}
-            whileHover={{ x: -3 }}
-            whileTap={{ scale: 0.96 }}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-600"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Voltar
-          </motion.button>
-
-          <motion.button
-            type="button"
-            onClick={() => goNext()}
-            disabled={submitting}
-            whileHover={{ scale: 1.04, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            className="group inline-flex cursor-pointer items-center gap-2.5 rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-accent-500 px-7 py-3.5 text-sm font-bold text-white shadow-glow disabled:cursor-wait disabled:opacity-70"
-          >
-            {submitting ? (
-              <>
-                <SpinnerIcon className="h-4 w-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                {isLast ? "Enviar respostas" : "Continuar"}
-                <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </>
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <p className="mt-5 flex items-start gap-2 rounded-lg border border-danger-500/25 bg-danger-50 px-4 py-3 text-sm font-medium text-danger-600">
+                  <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  {error}
+                </p>
+              </motion.div>
             )}
-          </motion.button>
-        </div>
-      </motion.div>
+          </AnimatePresence>
+        </motion.div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
-        {Array.from({ length: totalSteps }, (_, index) => (
-          <motion.button
-            key={index}
-            type="button"
-            onClick={() => {
-              if (index < step) {
-                setDirection(-1);
-                setStep(index);
-                setError(null);
-              }
-            }}
-            animate={{
-              width: index === step ? 26 : 8,
-              opacity: index <= step ? 1 : 0.4,
-            }}
-            transition={{ type: "spring", stiffness: 380, damping: 26 }}
-            className={`h-2 rounded-full ${
-              index <= step
-                ? "cursor-pointer bg-gradient-to-r from-brand-500 to-accent-500"
-                : "cursor-default bg-brand-200"
-            }`}
-            aria-label={
-              index === 0 ? "Identificação" : `Pergunta ${index}`
-            }
+        <div className="mt-6 hidden sm:block">
+          <Actions
+            isLast={isLast}
+            submitting={submitting}
+            onBack={goBack}
+            onNext={() => goNext()}
           />
-        ))}
+        </div>
+      </main>
+
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 px-4 pt-3 backdrop-blur sm:hidden">
+        <Actions
+          isLast={isLast}
+          submitting={submitting}
+          onBack={goBack}
+          onNext={() => goNext()}
+        />
       </div>
     </div>
   );

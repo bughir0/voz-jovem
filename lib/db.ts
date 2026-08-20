@@ -2,17 +2,29 @@ import { createClient, type Client, type Row } from "@libsql/client";
 import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_QUESTIONS, DEFAULT_QUESTION_IDS } from "./default-questions";
-import type {
-  Answers,
-  Question,
-  QuestionInput,
-  StoredResponse,
+import {
+  isFormStatus,
+  type Answers,
+  type FormStatus,
+  type Question,
+  type QuestionInput,
+  type StoredResponse,
 } from "./types";
 
-const DATABASE_URL = process.env.DATABASE_URL ?? "file:./data/voz-jovem.db";
+const DATABASE_URL =
+  process.env.DATABASE_URL?.trim() || "file:./data/voz-jovem.db";
 
 function buildClient(): Client {
   if (DATABASE_URL.startsWith("file:")) {
+    // Na Vercel o disco é somente leitura e some a cada requisição, então um
+    // banco em arquivo perderia todas as respostas sem avisar.
+    if (process.env.VERCEL) {
+      throw new Error(
+        "DATABASE_URL aponta para um arquivo local, o que não funciona na Vercel. " +
+          "Configure a URL libSQL do Turso (libsql://...) e o DATABASE_AUTH_TOKEN.",
+      );
+    }
+
     // O caminho vem de variável de ambiente; o turbopackIgnore evita que o
     // bundler inclua todo o projeto no rastreamento de arquivos.
     const relative = DATABASE_URL.slice("file:".length);
@@ -57,17 +69,24 @@ CREATE TABLE IF NOT EXISTS survey_responses (
   answers TEXT NOT NULL
 )`;
 
+const SCHEMA_SETTINGS = `
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+)`;
+
 // O módulo é reavaliado a cada hot-reload do Next em desenvolvimento; guardar a
 // conexão no globalThis evita abrir dezenas de handles no mesmo arquivo SQLite.
 // O sufixo de versão descarta conexões antigas quando o esquema muda.
-const cache = globalThis as unknown as { __vozJovemDbV2?: Promise<Client> };
+const cache = globalThis as unknown as { __vozJovemDbV3?: Promise<Client> };
 
 function connect(): Promise<Client> {
-  if (!cache.__vozJovemDbV2) {
-    cache.__vozJovemDbV2 = (async () => {
+  if (!cache.__vozJovemDbV3) {
+    cache.__vozJovemDbV3 = (async () => {
       const client = buildClient();
       await client.execute(SCHEMA_QUESTIONS);
       await client.execute(SCHEMA_RESPONSES);
+      await client.execute(SCHEMA_SETTINGS);
       await client.execute(
         "CREATE INDEX IF NOT EXISTS idx_survey_responses_created_at ON survey_responses (created_at DESC)",
       );
@@ -76,7 +95,7 @@ function connect(): Promise<Client> {
       return client;
     })();
   }
-  return cache.__vozJovemDbV2;
+  return cache.__vozJovemDbV3;
 }
 
 async function seedQuestions(client: Client): Promise<void> {
@@ -389,6 +408,33 @@ export async function deleteResponse(id: string): Promise<void> {
   await db.execute({
     sql: "DELETE FROM survey_responses WHERE id = ?",
     args: [id],
+  });
+}
+
+const FORM_STATUS_KEY = "form_status";
+
+async function readSetting(key: string): Promise<string | null> {
+  const db = await connect();
+  const result = await db.execute({
+    sql: "SELECT value FROM settings WHERE key = ? LIMIT 1",
+    args: [key],
+  });
+  const row = result.rows[0];
+  return row ? String(row.value) : null;
+}
+
+/** Um banco criado antes desta configuração existir conta como aberto. */
+export async function getFormStatus(): Promise<FormStatus> {
+  const stored = await readSetting(FORM_STATUS_KEY);
+  return isFormStatus(stored) ? stored : "open";
+}
+
+export async function setFormStatus(status: FormStatus): Promise<void> {
+  const db = await connect();
+  await db.execute({
+    sql: `INSERT INTO settings (key, value) VALUES (?, ?)
+          ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    args: [FORM_STATUS_KEY, status],
   });
 }
 

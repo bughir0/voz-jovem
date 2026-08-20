@@ -25,22 +25,20 @@ function Block({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index, 12) * 0.06, duration: 0.45 }}
-      className="border-b border-brand-100 py-4 last:border-b-0"
+      transition={{ delay: Math.min(index, 12) * 0.05, duration: 0.4 }}
+      className="border-b border-line py-5 last:border-b-0"
     >
-      <p className="flex flex-wrap items-center gap-2 text-xs font-bold tracking-wide text-ink-500 uppercase">
+      <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-700">
         {title}
         {badge && (
-          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[0.62rem] font-bold tracking-normal text-ink-500 normal-case">
+          <span className="rounded-full border border-line px-2 py-0.5 text-[0.62rem] font-medium text-ink-500">
             {badge}
           </span>
         )}
       </p>
-      <div className="mt-2 text-[0.95rem] font-semibold text-ink-900">
-        {children}
-      </div>
+      <div className="mt-2.5">{children}</div>
     </motion.div>
   );
 }
@@ -52,12 +50,14 @@ function Pill({
   children: React.ReactNode;
   highlight?: boolean;
 }) {
-  return highlight ? (
-    <span className="inline-block rounded-full bg-gradient-to-r from-brand-600 to-accent-500 px-4 py-2 text-sm font-bold text-white">
-      {children}
-    </span>
-  ) : (
-    <span className="inline-block rounded-full bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-700">
+  return (
+    <span
+      className={`inline-block rounded-lg px-3 py-1.5 text-sm font-medium ${
+        highlight
+          ? "bg-brand-700 text-white"
+          : "bg-brand-50 text-brand-800"
+      }`}
+    >
       {children}
     </span>
   );
@@ -72,7 +72,7 @@ function AnswerBody({
 }) {
   if (!answer) {
     return (
-      <span className="text-sm font-semibold text-ink-300">
+      <span className="text-sm text-ink-400">
         {question.required ? "Sem resposta" : "Não respondeu (opcional)"}
       </span>
     );
@@ -86,17 +86,17 @@ function AnswerBody({
           {scaleValues(question).map((item) => (
             <span
               key={item}
-              className={`grid h-9 w-9 place-items-center rounded-lg text-sm font-black ${
+              className={`tnum grid h-9 w-9 place-items-center rounded-lg text-sm font-semibold ${
                 item <= value
-                  ? "bg-gradient-to-br from-brand-500 to-accent-500 text-white"
-                  : "bg-brand-50 text-brand-200"
+                  ? "bg-brand-600 text-white"
+                  : "bg-brand-50 text-brand-300"
               }`}
             >
               {item}
             </span>
           ))}
         </div>
-        <span className="text-sm font-bold text-ink-500">
+        <span className="text-sm text-ink-500">
           {value} de {question.scaleMax}
           {value === question.scaleMin && question.scaleMinLabel
             ? ` — ${question.scaleMinLabel}`
@@ -111,11 +111,11 @@ function AnswerBody({
 
   if (question.type === "text") {
     return answer.text?.trim() ? (
-      <p className="rounded-2xl border border-brand-100 bg-white/70 p-4 text-sm leading-relaxed font-normal whitespace-pre-line text-ink-700">
+      <p className="border-l-2 border-line pl-4 text-sm leading-relaxed whitespace-pre-line text-ink-700">
         {answer.text}
       </p>
     ) : (
-      <span className="text-sm font-semibold text-ink-300">
+      <span className="text-sm text-ink-400">
         {question.required ? "Sem resposta" : "Não respondeu (opcional)"}
       </span>
     );
@@ -133,9 +133,7 @@ function AnswerBody({
         ))}
       </div>
       {choices.includes(OTHER_CHOICE) && answer.other && (
-        <p className="mt-2 text-sm font-normal text-ink-700">
-          Outro: {answer.other}
-        </p>
+        <p className="mt-2 text-sm text-ink-700">Outro: {answer.other}</p>
       )}
     </>
   );
@@ -182,22 +180,20 @@ export function ResponseDetail({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="glass-card rounded-[1.75rem] p-6 sm:p-9"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      className="card rounded-2xl p-5 sm:p-8"
     >
-      <header className="mb-6 flex flex-wrap items-center gap-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 text-xl font-black text-white">
+      <header className="flex flex-wrap items-start gap-4 border-b border-line pb-6">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-brand-50 text-lg font-semibold text-brand-700">
           {response.name.trim().charAt(0).toUpperCase()}
         </span>
-        <div className="flex-1">
-          <h1 className="text-2xl font-black tracking-tight text-ink-900">
-            {response.name}
-          </h1>
+        <div className="min-w-[12rem] flex-1">
+          <h1 className="display text-2xl text-ink-900">{response.name}</h1>
           <p className="text-sm text-ink-500">{response.email}</p>
         </div>
-        <p className="text-xs font-semibold text-ink-300">
+        <p className="text-xs text-ink-400">
           Enviada em{" "}
           {new Date(response.createdAt).toLocaleString("pt-BR", {
             dateStyle: "long",
@@ -236,25 +232,25 @@ export function ResponseDetail({
         ))}
       </div>
 
-      <footer className="no-print mt-8 flex flex-wrap items-center gap-3">
+      <footer className="no-print mt-8 flex flex-wrap items-center gap-3 border-t border-line pt-6">
         <button
           type="button"
           onClick={() => window.print()}
-          className="cursor-pointer rounded-full border-2 border-brand-200 bg-white/70 px-5 py-2.5 text-xs font-bold text-brand-600 transition-colors hover:border-brand-400"
+          className="min-h-10 cursor-pointer rounded-lg border border-line px-4 text-xs font-semibold text-ink-700 transition-colors hover:border-line-strong hover:text-brand-700"
         >
           Imprimir / salvar em PDF
         </button>
 
         {confirming ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-ink-500">
+            <span className="text-xs font-medium text-ink-600">
               Excluir esta resposta definitivamente?
             </span>
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-accent-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+              className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-danger-500 px-4 text-xs font-semibold text-white transition-colors hover:bg-danger-600 disabled:opacity-60"
             >
               {deleting && <SpinnerIcon className="h-3.5 w-3.5 animate-spin" />}
               Sim, excluir
@@ -262,7 +258,7 @@ export function ResponseDetail({
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="cursor-pointer rounded-full px-3 py-2 text-xs font-bold text-ink-500 hover:text-ink-900"
+              className="min-h-9 cursor-pointer rounded-lg px-3 text-xs font-semibold text-ink-500 hover:text-ink-900"
             >
               Cancelar
             </button>
@@ -271,14 +267,14 @@ export function ResponseDetail({
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="cursor-pointer rounded-full px-4 py-2.5 text-xs font-bold text-ink-300 transition-colors hover:text-accent-500"
+            className="min-h-10 cursor-pointer rounded-lg px-3 text-xs font-semibold text-ink-400 transition-colors hover:text-danger-500"
           >
             Excluir resposta
           </button>
         )}
 
         {error && (
-          <p className="flex items-center gap-1.5 text-xs font-bold text-accent-500">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-danger-500">
             <AlertIcon className="h-4 w-4" />
             {error}
           </p>

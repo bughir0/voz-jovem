@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AuroraBackground } from "@/components/AuroraBackground";
 import { isAdmin } from "@/lib/auth";
 import { LoginForm } from "./LoginForm";
 
@@ -9,8 +8,7 @@ export default async function AdminLoginPage() {
   if (await isAdmin()) redirect("/admin");
 
   return (
-    <main className="relative grid min-h-screen place-items-center px-5">
-      <AuroraBackground />
+    <main className="grid min-h-dvh place-items-center bg-brand-900 px-5 py-12">
       <LoginForm />
     </main>
   );

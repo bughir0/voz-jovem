@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AuroraBackground } from "@/components/AuroraBackground";
 import { ResponseDetail } from "@/components/admin/ResponseDetail";
 import { requireAdmin } from "@/lib/auth";
 import { getResponse, listQuestions } from "@/lib/db";
@@ -23,12 +22,11 @@ export default async function ResponseDetailPage({
   if (!response) notFound();
 
   return (
-    <main className="relative min-h-screen">
-      <AuroraBackground />
+    <main className="min-h-dvh">
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <Link
           href="/admin"
-          className="no-print mb-6 inline-flex items-center gap-2 text-sm font-bold text-brand-600 transition-colors hover:text-brand-700"
+          className="no-print mb-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-800"
         >
           ← Voltar ao painel
         </Link>

@@ -6,6 +6,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  CartesianGrid,
   Legend,
   Pie,
   PieChart,
@@ -17,31 +18,35 @@ import {
 import type { Slice } from "@/lib/stats";
 
 export const PALETTE = [
-  "#7350f0",
-  "#f0479f",
-  "#35d6b0",
-  "#ffb43d",
-  "#5b34d6",
-  "#ff7ac6",
-  "#20b6d8",
-  "#8f76fb",
-  "#e8567a",
-  "#4bc46b",
+  "#1d4166",
+  "#3c6c9c",
+  "#628fb9",
+  "#93b3d3",
+  "#1c7a58",
+  "#9a6b16",
+  "#7a5a86",
+  "#3f7d8c",
+  "#8c4a4a",
+  "#61758a",
 ];
 
+const INK = "#2a4055";
+const MUTED = "#8496a8";
+const GRID = "#eaeff5";
+
 const tooltipStyle = {
-  borderRadius: 14,
-  border: "1px solid #e6e0ff",
-  boxShadow: "0 18px 40px -20px rgba(20,16,42,0.35)",
+  borderRadius: 10,
+  border: "1px solid #dde4ec",
+  boxShadow: "0 10px 28px -20px rgba(12,26,43,0.35)",
   fontSize: 13,
-  fontWeight: 600,
-  color: "#14102a",
+  fontWeight: 500,
+  color: "#0c1a2b",
 };
 
 function EmptyState({ height }: { height: number }) {
   return (
     <div
-      className="grid place-items-center rounded-2xl border border-dashed border-brand-200 text-sm font-semibold text-ink-300"
+      className="grid place-items-center rounded-xl border border-dashed border-line-strong text-sm text-ink-400"
       style={{ height }}
     >
       Sem dados para exibir ainda
@@ -59,7 +64,11 @@ function countLabel(value: unknown): [string, string] {
   return [`${Number(value)}`, "Respostas"];
 }
 
-function shareLabel(value: unknown, _name: unknown, entry: unknown): [string, string] {
+function shareLabel(
+  value: unknown,
+  _name: unknown,
+  entry: unknown,
+): [string, string] {
   const count = Number(value);
   const percent = (entry as { payload?: Slice } | undefined)?.payload?.percent;
   return [
@@ -75,7 +84,7 @@ function nameLabel(value: unknown, name: unknown): [string, string] {
 export function HorizontalBars({
   data,
   height = 420,
-  color = "#7350f0",
+  color = "#3c6c9c",
 }: {
   data: Slice[];
   height?: number;
@@ -94,34 +103,34 @@ export function HorizontalBars({
         <YAxis
           type="category"
           dataKey="name"
-          width={210}
+          width={190}
           tickLine={false}
           axisLine={false}
-          tick={{ fill: "#3b3560", fontSize: 12, fontWeight: 600 }}
-          tickFormatter={(value: string) => truncate(value, 30)}
+          tick={{ fill: INK, fontSize: 12 }}
+          tickFormatter={(value: string) => truncate(value, 28)}
         />
         <Tooltip
           contentStyle={tooltipStyle}
           formatter={shareLabel}
-          cursor={{ fill: "rgba(115,80,240,0.06)" }}
+          cursor={{ fill: "rgba(60,108,156,0.06)" }}
         />
         <Bar
           dataKey="value"
-          radius={[0, 10, 10, 0]}
-          barSize={20}
-          animationDuration={900}
+          radius={[0, 4, 4, 0]}
+          barSize={18}
+          animationDuration={800}
           label={{
             position: "right",
-            fill: "#6b6590",
+            fill: MUTED,
             fontSize: 12,
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           {data.map((item, index) => (
             <Cell
               key={item.name}
-              fill={index === 0 ? "#f0479f" : color}
-              fillOpacity={1 - Math.min(index, 8) * 0.07}
+              fill={index === 0 ? "#16324e" : color}
+              fillOpacity={index === 0 ? 1 : 1 - Math.min(index, 7) * 0.08}
             />
           ))}
         </Bar>
@@ -141,15 +150,13 @@ export function VerticalBars({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart
-        data={data}
-        margin={{ top: 24, right: 8, bottom: 4, left: -18 }}
-      >
+      <BarChart data={data} margin={{ top: 24, right: 8, bottom: 4, left: -18 }}>
+        <CartesianGrid vertical={false} stroke={GRID} />
         <XAxis
           dataKey="name"
           tickLine={false}
           axisLine={false}
-          tick={{ fill: "#3b3560", fontSize: 11, fontWeight: 600 }}
+          tick={{ fill: INK, fontSize: 11 }}
           tickFormatter={(value: string) => truncate(value, 14)}
           interval={0}
         />
@@ -157,23 +164,23 @@ export function VerticalBars({
           tickLine={false}
           axisLine={false}
           allowDecimals={false}
-          tick={{ fill: "#a8a3c4", fontSize: 11 }}
+          tick={{ fill: MUTED, fontSize: 11 }}
         />
         <Tooltip
           contentStyle={tooltipStyle}
           formatter={countLabel}
-          cursor={{ fill: "rgba(115,80,240,0.06)" }}
+          cursor={{ fill: "rgba(60,108,156,0.06)" }}
         />
         <Bar
           dataKey="value"
-          radius={[10, 10, 4, 4]}
-          maxBarSize={54}
-          animationDuration={900}
+          radius={[4, 4, 0, 0]}
+          maxBarSize={48}
+          animationDuration={800}
           label={{
             position: "top",
-            fill: "#6b6590",
+            fill: MUTED,
             fontSize: 12,
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           {data.map((item, index) => (
@@ -201,11 +208,12 @@ export function Donut({
           data={data}
           dataKey="value"
           nameKey="name"
-          innerRadius="52%"
+          innerRadius="56%"
           outerRadius="80%"
-          paddingAngle={3}
-          stroke="none"
-          animationDuration={900}
+          paddingAngle={2}
+          stroke="#ffffff"
+          strokeWidth={2}
+          animationDuration={800}
         >
           {data.map((item, index) => (
             <Cell key={item.name} fill={PALETTE[index % PALETTE.length]} />
@@ -214,10 +222,10 @@ export function Donut({
         <Tooltip contentStyle={tooltipStyle} formatter={nameLabel} />
         <Legend
           verticalAlign="bottom"
-          iconType="circle"
+          iconType="square"
           iconSize={9}
           formatter={(value: string) => (
-            <span style={{ color: "#3b3560", fontSize: 12, fontWeight: 600 }}>
+            <span style={{ color: INK, fontSize: 12 }}>
               {truncate(value, 26)}
             </span>
           )}
@@ -238,37 +246,35 @@ export function Timeline({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <AreaChart
-        data={data}
-        margin={{ top: 10, right: 12, bottom: 0, left: -22 }}
-      >
+      <AreaChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: -22 }}>
         <defs>
           <linearGradient id="timelineFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7350f0" stopOpacity={0.5} />
-            <stop offset="100%" stopColor="#7350f0" stopOpacity={0} />
+            <stop offset="0%" stopColor="#3c6c9c" stopOpacity={0.22} />
+            <stop offset="100%" stopColor="#3c6c9c" stopOpacity={0} />
           </linearGradient>
         </defs>
+        <CartesianGrid vertical={false} stroke={GRID} />
         <XAxis
           dataKey="name"
           tickLine={false}
           axisLine={false}
-          tick={{ fill: "#a8a3c4", fontSize: 11, fontWeight: 600 }}
+          tick={{ fill: MUTED, fontSize: 11 }}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
           allowDecimals={false}
-          tick={{ fill: "#a8a3c4", fontSize: 11 }}
+          tick={{ fill: MUTED, fontSize: 11 }}
         />
         <Tooltip contentStyle={tooltipStyle} formatter={countLabel} />
         <Area
           type="monotone"
           dataKey="value"
-          stroke="#7350f0"
-          strokeWidth={3}
+          stroke="#1d4166"
+          strokeWidth={2}
           fill="url(#timelineFill)"
-          animationDuration={900}
-          dot={{ r: 4, fill: "#7350f0", strokeWidth: 0 }}
+          animationDuration={800}
+          dot={{ r: 3, fill: "#1d4166", strokeWidth: 0 }}
         />
       </AreaChart>
     </ResponsiveContainer>

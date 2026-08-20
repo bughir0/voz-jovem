@@ -13,8 +13,11 @@ type BaseProps = {
   autoFocus?: boolean;
 };
 
-const shell =
-  "w-full rounded-2xl border-2 bg-white/85 px-4 py-3.5 text-base text-ink-900 outline-none transition-all placeholder:text-ink-300 focus:bg-white";
+const reveal = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
+};
 
 export function TextField({
   label,
@@ -29,14 +32,10 @@ export function TextField({
   const id = useId();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <motion.div {...reveal}>
       <label
         htmlFor={id}
-        className="mb-1.5 block text-sm font-bold text-ink-700"
+        className="mb-1.5 block text-sm font-semibold text-ink-700"
       >
         {label}
       </label>
@@ -46,19 +45,18 @@ export function TextField({
         type={type}
         value={value}
         autoFocus={autoFocus}
+        autoComplete={type === "email" ? "email" : "name"}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`${shell} ${
-          error
-            ? "border-accent-500 focus:border-accent-500"
-            : "border-brand-100 focus:border-brand-400 focus:shadow-[0_0_0_4px_rgba(115,80,240,0.14)]"
+        className={`field-base focus:field-base-focus min-h-13 px-4 py-3.5 placeholder:text-ink-300 ${
+          error ? "border-danger-500" : ""
         }`}
       />
       {error && (
         <motion.p
-          initial={{ opacity: 0, x: -6 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mt-1.5 text-xs font-semibold text-accent-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-1.5 text-xs font-medium text-danger-500"
         >
           {error}
         </motion.p>
@@ -78,15 +76,11 @@ export function TextAreaField({
   const id = useId();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <motion.div {...reveal}>
       {label && (
         <label
           htmlFor={id}
-          className="mb-1.5 block text-sm font-bold text-ink-700"
+          className="mb-1.5 block text-sm font-semibold text-ink-700"
         >
           {label}
         </label>
@@ -99,9 +93,9 @@ export function TextAreaField({
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className={`${shell} custom-scroll resize-none border-brand-100 leading-relaxed focus:border-brand-400 focus:shadow-[0_0_0_4px_rgba(115,80,240,0.14)]`}
+        className="field-base focus:field-base-focus custom-scroll resize-none px-4 py-3.5 leading-relaxed placeholder:text-ink-300"
       />
-      <div className="mt-1.5 text-right text-xs font-semibold text-ink-300">
+      <div className="tnum mt-1.5 text-right text-xs text-ink-400">
         {value.length} / {maxLength}
       </div>
     </motion.div>
@@ -118,16 +112,20 @@ export function InlineOtherField({
   placeholder?: string;
 }) {
   return (
-    <motion.input
+    <motion.div
       initial={{ opacity: 0, height: 0, marginTop: 0 }}
-      animate={{ opacity: 1, height: "auto", marginTop: 10 }}
+      animate={{ opacity: 1, height: "auto", marginTop: 8 }}
       exit={{ opacity: 0, height: 0, marginTop: 0 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      value={value}
-      autoFocus
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      className="w-full rounded-2xl border-2 border-dashed border-brand-300 bg-white/90 px-4 py-3 text-base text-ink-900 outline-none transition-colors placeholder:text-ink-300 focus:border-brand-500"
-    />
+      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+      className="overflow-hidden pl-4"
+    >
+      <input
+        value={value}
+        autoFocus
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="field-base focus:field-base-focus min-h-12 border-dashed px-4 py-3 placeholder:text-ink-300"
+      />
+    </motion.div>
   );
 }

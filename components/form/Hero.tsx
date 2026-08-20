@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "motion/react";
-import { ArrowRightIcon, SparkIcon } from "@/components/icons";
+import { motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
+import { ArrowRightIcon } from "@/components/icons";
 
 export function Hero({
   onStart,
@@ -10,98 +11,110 @@ export function Hero({
   onStart: () => void;
   total: number;
 }) {
-  const highlights = [
+  const reduced = useReducedMotion();
+
+  const facts = [
     {
       title: `${total} ${total === 1 ? "pergunta" : "perguntas"}`,
-      text: "Leva poucos minutos",
+      text: "Cerca de 3 minutos para responder",
     },
-    { title: "Dados protegidos", text: "Usados só para a pesquisa" },
-    { title: "Sua voz conta", text: "Ajuda a definir prioridades" },
+    { title: "Dados protegidos", text: "Usados apenas nesta pesquisa" },
+    { title: "Resultado público", text: "Define as prioridades do projeto" },
   ];
 
+  const rise = (delay: number) => ({
+    initial: { opacity: 0, y: reduced ? 0 : 18 },
+    animate: { opacity: 1, y: 0 },
+    transition: { delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+  });
+
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -30, filter: "blur(8px)" }}
-      transition={{ duration: 0.5 }}
-      className="mx-auto w-full max-w-3xl px-5 py-14 text-center sm:py-20"
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex min-h-dvh flex-col bg-brand-900 text-white"
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 220, damping: 18 }}
-        className="animate-float mx-auto mb-7 grid h-20 w-20 place-items-center rounded-[1.6rem] bg-gradient-to-br from-brand-500 via-brand-400 to-accent-500 text-white shadow-glow"
-      >
-        <SparkIcon className="h-10 w-10" />
-      </motion.div>
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-5 py-16 sm:px-8 sm:py-24">
+        <motion.div {...rise(0)} className="flex items-center gap-3">
+          <motion.span
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="block h-px w-10 origin-left bg-brand-400"
+          />
+          <span className="eyebrow text-brand-300">Pesquisa Voz Jovem</span>
+        </motion.div>
 
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12, duration: 0.5 }}
-        className="mb-4 inline-block rounded-full border border-brand-200 bg-white/70 px-4 py-1.5 text-xs font-bold tracking-[0.16em] text-brand-600 uppercase"
-      >
-        Pesquisa Juventude
-      </motion.p>
-
-      <motion.h1
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="text-4xl leading-[1.05] font-black tracking-tight text-ink-900 sm:text-6xl"
-      >
-        Qual problema mais{" "}
-        <span className="text-gradient">afeta os jovens</span> na sua realidade?
-      </motion.h1>
-
-      <motion.p
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.28, duration: 0.6 }}
-        className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-500 sm:text-lg"
-      >
-        Responda {total} {total === 1 ? "pergunta" : "perguntas"} e ajude a
-        mapear os desafios da juventude na sua comunidade. As respostas serão
-        usadas para escolher as prioridades do projeto.
-      </motion.p>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.38, duration: 0.5 }}
-        className="mt-9"
-      >
-        <motion.button
-          type="button"
-          onClick={onStart}
-          whileHover={{ scale: 1.04, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          className="group inline-flex cursor-pointer items-center gap-3 rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-accent-500 px-9 py-4 text-base font-bold text-white shadow-glow"
+        <motion.h1
+          {...rise(0.08)}
+          className="display mt-6 text-[clamp(2.25rem,8vw,4.25rem)] text-white"
         >
-          Começar a responder
-          <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-        </motion.button>
-        <p className="mt-3 text-xs font-semibold text-ink-300">
-          Ou pressione Enter
-        </p>
-      </motion.div>
+          Qual problema mais afeta os jovens na sua realidade?
+        </motion.h1>
 
-      <div className="mt-14 grid gap-3 sm:grid-cols-3">
-        {highlights.map((item, index) => (
-          <motion.div
-            key={item.title}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-            whileHover={{ y: -5 }}
-            className="glass-card rounded-2xl px-5 py-4 text-left"
+        <motion.p
+          {...rise(0.16)}
+          className="mt-6 max-w-xl text-base leading-relaxed text-brand-200 sm:text-lg"
+        >
+          Responda {total} {total === 1 ? "pergunta" : "perguntas"} e ajude a
+          mapear os desafios da juventude na sua comunidade. As respostas
+          definem quais problemas o projeto vai priorizar.
+        </motion.p>
+
+        <motion.div
+          {...rise(0.24)}
+          className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center"
+        >
+          <motion.button
+            type="button"
+            onClick={onStart}
+            whileHover={reduced ? undefined : { y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="group inline-flex w-full min-h-13 cursor-pointer items-center justify-center gap-3 rounded-xl bg-white px-8 py-4 text-base font-semibold text-brand-900 sm:w-auto"
           >
-            <p className="text-sm font-extrabold text-ink-900">{item.title}</p>
-            <p className="mt-0.5 text-xs text-ink-500">{item.text}</p>
-          </motion.div>
-        ))}
+            Começar a responder
+            <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+          </motion.button>
+          <p className="hidden text-sm text-brand-300 sm:block">
+            ou pressione Enter
+          </p>
+        </motion.div>
+
+        <motion.dl
+          {...rise(0.34)}
+          className="mt-16 grid gap-px overflow-hidden border-y border-white/12 sm:grid-cols-3"
+        >
+          {facts.map((fact) => (
+            <div
+              key={fact.title}
+              className="border-b border-white/12 py-5 last:border-b-0 sm:border-b-0 sm:pr-6"
+            >
+              <dt className="text-sm font-semibold text-white">{fact.title}</dt>
+              <dd className="mt-1 text-sm text-brand-300">{fact.text}</dd>
+            </div>
+          ))}
+        </motion.dl>
       </div>
-    </motion.div>
+
+      <motion.footer
+        {...rise(0.46)}
+        className="border-t border-white/10 px-5 py-5 sm:px-8"
+      >
+        <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
+          <p className="text-xs text-brand-400">
+            Pesquisa conduzida pela organização Voz Jovem
+          </p>
+          <Link
+            href="/admin"
+            className="text-xs font-semibold text-brand-300 underline-offset-4 transition-colors hover:text-white hover:underline"
+          >
+            Painel da organização
+          </Link>
+        </div>
+      </motion.footer>
+    </motion.section>
   );
 }

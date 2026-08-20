@@ -25,6 +25,43 @@ export const QUESTION_TYPE_HINTS: Record<QuestionType, string> = {
     "As alternativas são as que a pessoa marcou em uma pergunta de múltipla escolha, aceitando só uma resposta.",
 };
 
+export const FORM_STATUSES = ["open", "paused", "closed"] as const;
+
+export type FormStatus = (typeof FORM_STATUSES)[number];
+
+export const FORM_STATUS_LABELS: Record<FormStatus, string> = {
+  open: "Aberto",
+  paused: "Pausado",
+  closed: "Fechado",
+};
+
+export const FORM_STATUS_HINTS: Record<FormStatus, string> = {
+  open: "O formulário está no ar e recebendo respostas.",
+  paused:
+    "Pausa temporária: ninguém consegue responder e o aviso diz que a pesquisa volta em breve.",
+  closed:
+    "Coleta encerrada: o formulário sai do ar e o aviso agradece quem participou.",
+};
+
+/** Aviso que substitui o formulário quando a pesquisa não está aberta. */
+export const FORM_STATUS_NOTICE: Record<
+  Exclude<FormStatus, "open">,
+  { title: string; text: string }
+> = {
+  paused: {
+    title: "A pesquisa está pausada",
+    text: "Estamos organizando as respostas recebidas até aqui. Volte em breve para participar.",
+  },
+  closed: {
+    title: "A pesquisa foi encerrada",
+    text: "Obrigado a quem participou. Os resultados vão orientar as próximas ações do projeto.",
+  },
+};
+
+export function isFormStatus(value: unknown): value is FormStatus {
+  return FORM_STATUSES.includes(value as FormStatus);
+}
+
 export type Question = {
   id: string;
   position: number;

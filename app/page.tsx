@@ -1,39 +1,33 @@
-import Link from "next/link";
-import { AuroraBackground } from "@/components/AuroraBackground";
 import { FormFlow } from "@/components/form/FormFlow";
-import { listQuestions } from "@/lib/db";
+import { StatusNotice } from "@/components/form/StatusNotice";
+import { getFormStatus, listQuestions } from "@/lib/db";
+import { FORM_STATUS_NOTICE } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const questions = await listQuestions();
+  const [questions, status] = await Promise.all([
+    listQuestions(),
+    getFormStatus(),
+  ]);
+
+  if (status !== "open") {
+    const notice = FORM_STATUS_NOTICE[status];
+    return <StatusNotice title={notice.title} text={notice.text} />;
+  }
+
+  if (questions.length === 0) {
+    return (
+      <StatusNotice
+        title="A pesquisa está sendo preparada"
+        text="Nenhuma pergunta está publicada no momento. Volte em breve para participar."
+      />
+    );
+  }
 
   return (
-    <main className="relative min-h-screen">
-      <AuroraBackground />
-
-      <Link
-        href="/admin"
-        className="fixed top-4 right-4 z-40 rounded-full border border-brand-200 bg-white/70 px-4 py-2 text-xs font-bold text-brand-600 backdrop-blur transition-colors hover:border-brand-400 hover:bg-white"
-      >
-        Painel admin
-      </Link>
-
-      {questions.length === 0 ? (
-        <div className="mx-auto w-full max-w-xl px-5 py-24 text-center">
-          <div className="glass-card rounded-[1.75rem] p-8">
-            <h1 className="text-2xl font-black tracking-tight text-ink-900">
-              A pesquisa está sendo preparada
-            </h1>
-            <p className="mt-3 text-sm text-ink-500">
-              Nenhuma pergunta está publicada no momento. Volte em breve para
-              participar.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <FormFlow questions={questions} />
-      )}
+    <main>
+      <FormFlow questions={questions} />
     </main>
   );
 }

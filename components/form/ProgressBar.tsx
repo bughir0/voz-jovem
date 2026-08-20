@@ -2,47 +2,54 @@
 
 import { motion } from "motion/react";
 
-export function ProgressBar({
-  current,
-  total,
-  label,
-}: {
+type Props = {
+  /** Etapa atual, começando em 1. */
   current: number;
   total: number;
   label: string;
-}) {
+  /** Recebe o índice (base 0) da etapa escolhida; só etapas já vistas chamam. */
+  onSelect?: (index: number) => void;
+};
+
+export function ProgressBar({ current, total, label, onSelect }: Props) {
   const percent = Math.round((current / total) * 100);
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex items-end justify-between text-xs font-semibold text-ink-500">
-        <span className="tracking-[0.14em] uppercase">{label}</span>
-        <motion.span
-          key={percent}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-brand-600"
-        >
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="eyebrow text-ink-500">{label}</span>
+        <span className="tnum text-xs font-semibold text-brand-600">
           {percent}%
-        </motion.span>
+        </span>
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100/80">
-        <motion.div
-          className="relative h-full rounded-full bg-gradient-to-r from-brand-500 via-brand-400 to-accent-500"
-          initial={false}
-          animate={{ width: `${percent}%` }}
-          transition={{ type: "spring", stiffness: 120, damping: 20 }}
-        >
-          <span
-            className="animate-shimmer absolute inset-0 rounded-full"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent)",
-              backgroundSize: "200% 100%",
-            }}
-          />
-        </motion.div>
+      <div className="mt-2 flex gap-1">
+        {Array.from({ length: total }, (_, index) => {
+          const reached = index < current;
+          const visited = index < current - 1;
+
+          return (
+            <button
+              key={index}
+              type="button"
+              disabled={!visited}
+              onClick={() => onSelect?.(index)}
+              aria-label={
+                index === 0 ? "Identificação" : `Ir para a pergunta ${index}`
+              }
+              className="group h-4 flex-1 disabled:cursor-default"
+            >
+              <span className="block h-1 w-full overflow-hidden rounded-full bg-line transition-colors group-enabled:group-hover:bg-brand-200">
+                <motion.span
+                  className="block h-full w-full origin-left rounded-full bg-brand-600"
+                  initial={false}
+                  animate={{ scaleX: reached ? 1 : 0 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                />
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -22,26 +22,26 @@ export function QuestionShell({
   return (
     <div>
       <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="mb-3 flex items-center gap-2.5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center gap-3"
       >
-        <span className="rounded-full bg-gradient-to-r from-brand-500 to-accent-500 px-3 py-1 text-xs font-bold tracking-wide text-white">
-          {number} / {total}
+        <span className="tnum eyebrow text-brand-600">
+          {String(number).padStart(2, "0")} — {String(total).padStart(2, "0")}
         </span>
         {!required && (
-          <span className="rounded-full border border-brand-200 bg-white/70 px-2.5 py-1 text-xs font-semibold text-ink-500">
+          <span className="rounded-full border border-line px-2 py-0.5 text-[0.68rem] font-medium text-ink-500">
             opcional
           </span>
         )}
       </motion.div>
 
       <motion.h2
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="text-2xl leading-tight font-extrabold tracking-tight text-ink-900 sm:text-[1.75rem]"
+        className="display mt-3 text-[clamp(1.5rem,4.5vw,2rem)] text-ink-900"
       >
         {title}
       </motion.h2>
@@ -50,8 +50,8 @@ export function QuestionShell({
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-          className="mt-2 text-sm text-ink-500"
+          transition={{ delay: 0.08, duration: 0.4 }}
+          className="mt-2 text-sm leading-relaxed text-ink-500"
         >
           {hint}
         </motion.p>

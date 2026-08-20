@@ -82,25 +82,20 @@ export function QuestionStep({
               {Array.from({ length: question.maxChoices }, (_, index) => (
                 <motion.span
                   key={index}
-                  animate={{
-                    scale: index < choices.length ? 1 : 0.75,
-                    opacity: index < choices.length ? 1 : 0.35,
-                  }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  className={`h-2.5 w-8 rounded-full ${
-                    index < choices.length
-                      ? "bg-gradient-to-r from-brand-500 to-accent-500"
-                      : "bg-brand-200"
+                  animate={{ scaleX: index < choices.length ? 1 : 0.35 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                  className={`h-1 w-7 origin-left rounded-full ${
+                    index < choices.length ? "bg-brand-600" : "bg-line"
                   }`}
                 />
               ))}
-              <span className="ml-1 text-xs font-bold text-ink-500">
+              <span className="tnum ml-1.5 text-xs font-medium text-ink-500">
                 {choices.length} de {question.maxChoices} selecionados
               </span>
             </div>
           )}
 
-          <div className="custom-scroll max-h-[46vh] space-y-2.5 overflow-y-auto pr-2">
+          <div className="custom-scroll space-y-2 sm:max-h-[46vh] sm:overflow-y-auto sm:pr-2">
             {options.map((option, index) => {
               const selected = choices.includes(option);
               return (
@@ -132,9 +127,9 @@ export function QuestionStep({
       )}
 
       {(question.type === "single" || question.type === "derived") && (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {options.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-brand-200 px-4 py-8 text-center text-sm font-semibold text-ink-300">
+            <p className="rounded-xl border border-dashed border-line-strong px-4 py-8 text-center text-sm text-ink-400">
               Esta pergunta ainda não tem alternativas cadastradas.
             </p>
           ) : (

@@ -9,7 +9,7 @@ administrativo com relatórios gráficos e visualização de respostas individua
 
 - Tela de abertura animada e uma pergunta por vez, com transições suaves.
 - Nome e e-mail obrigatórios antes das perguntas.
-- As 9 perguntas da pesquisa, incluindo:
+- As 11 perguntas da pesquisa, incluindo:
   - marcação de até 3 problemas na pergunta 3;
   - pergunta 4 mostrando **apenas** os problemas que a pessoa marcou na 3,
     aceitando uma única resposta (é ela que define a prioridade);
@@ -23,6 +23,10 @@ administrativo com relatórios gráficos e visualização de respostas individua
 **Painel administrativo (`/admin`)**
 
 - Login por senha (cookie de sessão assinado, válido por 8 horas).
+- Situação do formulário em três estados: **aberto**, **pausado** (interrupção
+  temporária) e **fechado** (coleta encerrada). Fora do estado aberto o painel
+  mostra um aviso destacado, a página pública exibe o recado no lugar do
+  formulário e a API recusa novos envios.
 - Indicadores: total de respostas, gravidade média, % de afetados diretamente e
   % que participariam de um projeto.
 - Destaque do problema eleito como prioridade.
@@ -33,7 +37,9 @@ administrativo com relatórios gráficos e visualização de respostas individua
 - Respostas individuais com busca por nome, e-mail ou problema.
 - Página de resposta individual com todas as perguntas, opção de imprimir/salvar
   em PDF e de excluir.
-- Exportação de todas as respostas em CSV (abre no Excel com os acentos corretos).
+- Exportação de todas as respostas em CSV, uma linha por participante, com data e
+  hora separadas (fuso de São Paulo), coluna própria para cada texto de "Outro" e
+  colunas que abrem alinhadas no Excel.
 
 ## Como rodar
 
@@ -68,14 +74,48 @@ criado automaticamente na primeira resposta. A pasta `data/` está no
 
 ## Publicando na Vercel
 
-A Vercel não permite gravar arquivos, então o SQLite local não funciona lá. O
-código usa o cliente libSQL, que fala o mesmo protocolo do
-[Turso](https://turso.tech):
+A Vercel não permite gravar arquivos e reinicia o servidor a cada requisição,
+então o SQLite local não serve lá — as respostas seriam perdidas. O código usa o
+cliente libSQL, que fala o mesmo protocolo do [Turso](https://turso.tech), um
+SQLite hospedado com plano gratuito.
 
-1. Crie um banco gratuito no Turso e copie a URL e o token.
-2. Na Vercel, configure as variáveis `DATABASE_URL` (`libsql://...`),
-   `DATABASE_AUTH_TOKEN`, `ADMIN_PASSWORD` e `ADMIN_SECRET`.
-3. Faça o deploy. Nenhuma alteração de código é necessária.
+**1. Criar o banco no Turso**
+
+Crie a conta em [turso.tech](https://turso.tech) e, com a CLI instalada:
+
+```bash
+turso auth login
+turso db create voz-jovem
+turso db show voz-jovem --url        # DATABASE_URL (libsql://...)
+turso db tokens create voz-jovem     # DATABASE_AUTH_TOKEN
+```
+
+As tabelas são criadas sozinhas na primeira vez que o site acessa o banco, junto
+com as perguntas padrão.
+
+**2. Importar o projeto na Vercel**
+
+Em [vercel.com/new](https://vercel.com/new), importe o repositório do GitHub. A
+Vercel reconhece o Next.js sozinho, sem ajuste de build.
+
+**3. Configurar as variáveis de ambiente**
+
+Ainda na tela de importação, em _Environment Variables_, adicione as quatro:
+
+| Variável              | Valor                                                  |
+| --------------------- | ------------------------------------------------------ |
+| `DATABASE_URL`        | a URL `libsql://...` do passo 1                        |
+| `DATABASE_AUTH_TOKEN` | o token do passo 1                                     |
+| `ADMIN_PASSWORD`      | a senha do painel (escolha uma forte, não use a local) |
+| `ADMIN_SECRET`        | valor aleatório: `openssl rand -hex 32`                |
+
+Sem `DATABASE_URL` o site sobe, mas quebra na primeira visita com um recado
+explicando o que falta. Sem `ADMIN_PASSWORD` o login do painel é recusado.
+
+**4. Publicar**
+
+Clique em _Deploy_. Cada `git push` na branch `main` gera um novo deploy
+automaticamente.
 
 ## Estrutura
 
@@ -86,17 +126,34 @@ app/
   admin/login/                 tela de login
   admin/respostas/[id]/        resposta individual
   api/responses/               recebe e valida os envios
-  api/admin/                   login, logout, exportação CSV, exclusão
+  api/admin/                   login, logout, situação do formulário,
+                               exportação CSV, exclusão
 components/
   form/                        telas e controles do formulário
   admin/                       painel, gráficos e cartões
 lib/
-  questions.ts                 perguntas e alternativas
+  default-questions.ts         perguntas com que o banco é semeado
   db.ts                        acesso ao banco (libSQL/SQLite)
   stats.ts                     agregações dos gráficos e geração do CSV
   auth.ts                      sessão do administrador
+scripts/
+  reset-questions.ts           regrava as perguntas a partir dos padrões
+  inspect-db.mjs               mostra perguntas e respostas do banco local
 ```
 
-Para mudar textos ou alternativas das perguntas, edite apenas
-`lib/questions.ts`: o formulário, a validação do servidor e os gráficos usam a
-mesma fonte.
+## Mudando as perguntas
+
+No dia a dia, use **Gerenciar perguntas** no painel: dá para criar, editar,
+reordenar e arquivar sem mexer no código.
+
+Para redefinir a lista inteira, edite `lib/default-questions.ts`. Esses valores
+só são gravados quando o banco está vazio; para aplicá-los a um banco que já
+tem perguntas, rode:
+
+```bash
+node scripts/reset-questions.ts
+```
+
+O script se recusa a rodar quando já existem respostas — nesse caso ele exige
+`--force`, porque perguntas que saem da lista deixam de aparecer nos
+relatórios (as respostas em si continuam guardadas).

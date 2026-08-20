@@ -68,9 +68,9 @@ function toDraft(question?: Question): Draft {
 }
 
 const inputClass =
-  "w-full rounded-xl border-2 border-brand-100 bg-white/85 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition-all placeholder:text-ink-300 focus:border-brand-400 focus:shadow-[0_0_0_4px_rgba(115,80,240,0.12)]";
+  "field-base focus:field-base-focus min-h-11 px-3.5 py-2.5 text-sm placeholder:text-ink-300";
 
-const labelClass = "mb-1.5 block text-xs font-bold text-ink-700";
+const labelClass = "mb-1.5 block text-xs font-semibold text-ink-700";
 
 export function QuestionForm({
   question,
@@ -174,8 +174,8 @@ export function QuestionForm({
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="overflow-hidden"
     >
-      <div className="glass-card rounded-2xl border-brand-300 p-6">
-        <h2 className="text-lg font-black tracking-tight text-ink-900">
+      <div className="card rounded-xl border-brand-300 p-5 sm:p-6">
+        <h2 className="display text-lg text-ink-900">
           {question ? "Editar pergunta" : "Nova pergunta"}
         </h2>
 
@@ -197,10 +197,10 @@ export function QuestionForm({
                         ? "Crie antes uma pergunta de múltipla escolha"
                         : QUESTION_TYPE_HINTS[type]
                     }
-                    className={`cursor-pointer rounded-full border-2 px-4 py-2 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    className={`min-h-9 cursor-pointer rounded-lg border px-4 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                       active
-                        ? "border-brand-500 bg-brand-50 text-brand-700"
-                        : "border-brand-100 bg-white/70 text-ink-500 hover:border-brand-300"
+                        ? "border-brand-600 bg-brand-50 text-brand-800"
+                        : "border-line bg-surface text-ink-500 hover:border-line-strong"
                     }`}
                   >
                     {QUESTION_TYPE_LABELS[type]}
@@ -275,7 +275,7 @@ export function QuestionForm({
               <div className="space-y-2">
                 {draft.options.map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-xs font-bold text-brand-500">
+                    <span className="tnum grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-700">
                       {index + 1}
                     </span>
                     <input
@@ -299,7 +299,7 @@ export function QuestionForm({
                       }
                       disabled={draft.options.length <= 2}
                       title="Remover alternativa"
-                      className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-ink-300 transition-colors hover:bg-accent-500/10 hover:text-accent-500 disabled:cursor-not-allowed disabled:opacity-30"
+                      className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg text-ink-400 transition-colors hover:bg-danger-50 hover:text-danger-500 disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -311,20 +311,20 @@ export function QuestionForm({
                 type="button"
                 onClick={() => patch({ options: [...draft.options, ""] })}
                 disabled={draft.options.length >= MAX_OPTIONS}
-                className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full border-2 border-dashed border-brand-300 px-4 py-2 text-xs font-bold text-brand-600 transition-colors hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-3 inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-line-strong px-4 text-xs font-semibold text-brand-700 transition-colors hover:border-brand-400 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <PlusIcon className="h-3.5 w-3.5" />
                 Adicionar alternativa
               </button>
 
-              <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-ink-700">
+              <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-sm text-ink-700">
                 <input
                   type="checkbox"
                   checked={draft.allowOther}
                   onChange={(event) =>
                     patch({ allowOther: event.target.checked })
                   }
-                  className="h-4 w-4 accent-brand-500"
+                  className="h-4 w-4 accent-brand-700"
                 />
                 Incluir alternativa “Outro” com campo de texto
               </label>
@@ -419,19 +419,19 @@ export function QuestionForm({
             </div>
           )}
 
-          <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-ink-700">
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink-700">
             <input
               type="checkbox"
               checked={draft.required}
               onChange={(event) => patch({ required: event.target.checked })}
-              className="h-4 w-4 accent-brand-500"
+              className="h-4 w-4 accent-brand-700"
             />
             Resposta obrigatória
           </label>
 
           {error && (
-            <p className="flex items-center gap-2 rounded-xl bg-accent-500/10 px-4 py-3 text-sm font-semibold text-accent-500">
-              <AlertIcon className="h-4 w-4 shrink-0" />
+            <p className="flex items-start gap-2 rounded-lg border border-danger-500/25 bg-danger-50 px-4 py-3 text-sm font-medium text-danger-600">
+              <AlertIcon className="mt-0.5 h-4 w-4 shrink-0" />
               {error}
             </p>
           )}
@@ -441,7 +441,7 @@ export function QuestionForm({
               type="button"
               onClick={save}
               disabled={saving}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-accent-500 px-6 py-2.5 text-xs font-bold text-white shadow-glow disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-brand-700 px-6 text-xs font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70"
             >
               {saving && <SpinnerIcon className="h-3.5 w-3.5 animate-spin" />}
               {question ? "Salvar alterações" : "Adicionar pergunta"}
@@ -449,7 +449,7 @@ export function QuestionForm({
             <button
               type="button"
               onClick={onCancel}
-              className="cursor-pointer rounded-full px-4 py-2.5 text-xs font-bold text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-600"
+              className="min-h-10 cursor-pointer rounded-lg px-4 text-xs font-semibold text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-700"
             >
               Cancelar
             </button>

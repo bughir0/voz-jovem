@@ -128,12 +128,19 @@ export function validateAnswer(
   return null;
 }
 
-/** Texto da resposta pronto para exibir no painel e no CSV. */
+/**
+ * Texto da resposta pronto para exibir. No painel o texto de "Outro" vem junto
+ * da alternativa; no CSV ele fica em coluna própria, então `withOtherText`
+ * permite manter a célula com o rótulo puro e contável.
+ */
 export function formatAnswer(
   question: Question,
   answer: Answer | undefined,
+  options?: { withOtherText?: boolean },
 ): string {
   if (!answer) return "";
+  const withOtherText = options?.withOtherText ?? true;
+
   switch (question.type) {
     case "scale":
       return typeof answer.number === "number" ? String(answer.number) : "";
@@ -143,7 +150,7 @@ export function formatAnswer(
       const choices = answer.choices ?? [];
       return choices
         .map((choice) =>
-          choice === OTHER_CHOICE && answer.other?.trim()
+          withOtherText && choice === OTHER_CHOICE && answer.other?.trim()
             ? `${OTHER_CHOICE}: ${answer.other.trim()}`
             : choice,
         )
