@@ -14,8 +14,6 @@ import {
   type Question,
 } from "@/lib/types";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
-
 function text(value: unknown, limit = 400): string {
   return typeof value === "string" ? value.trim().slice(0, limit) : "";
 }
@@ -75,16 +73,6 @@ export async function POST(request: Request) {
 
   const body = (payload ?? {}) as Record<string, unknown>;
 
-  const name = text(body.name, 120);
-  const email = text(body.email, 160).toLowerCase();
-  if (name.length < 2)
-    return NextResponse.json({ error: "Nome é obrigatório." }, { status: 400 });
-  if (!EMAIL_PATTERN.test(email))
-    return NextResponse.json(
-      { error: "E-mail é obrigatório e precisa ser válido." },
-      { status: 400 },
-    );
-
   const questions = await listQuestions();
   if (questions.length === 0)
     return NextResponse.json(
@@ -118,7 +106,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const saved = await insertResponse({ name, email, answers });
+    const saved = await insertResponse({ answers });
     return NextResponse.json({ ok: true, id: saved.id }, { status: 201 });
   } catch (error) {
     console.error("Falha ao salvar resposta:", error);

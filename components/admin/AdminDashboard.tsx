@@ -15,6 +15,8 @@ import { formatAnswer } from "@/lib/question-utils";
 import type { QuestionStats, Slice, Stats } from "@/lib/stats";
 import {
   QUESTION_TYPE_LABELS,
+  responseInitial,
+  responseTitle,
   type FormStatus,
   type Question,
   type StoredResponse,
@@ -85,7 +87,9 @@ function TextAnswers({ item }: { item: QuestionStats }) {
           <p className="text-sm leading-relaxed whitespace-pre-line text-ink-700">
             {answer.text}
           </p>
-          <p className="mt-1.5 text-xs text-ink-400">{answer.name}</p>
+          <p className="mt-1.5 text-xs text-ink-400">
+            {answer.name.trim() || "Resposta anônima"}
+          </p>
         </motion.li>
       ))}
     </ul>
@@ -360,7 +364,7 @@ export function AdminDashboard({
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar por nome, e-mail ou resposta..."
+                placeholder="Buscar por resposta..."
                 className="field-base focus:field-base-focus min-h-12 py-3 pr-4 pl-11 text-sm placeholder:text-ink-300"
               />
             </div>
@@ -386,15 +390,19 @@ export function AdminDashboard({
                     >
                       <div className="flex items-start gap-3">
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-50 text-sm font-semibold text-brand-700">
-                          {item.name.trim().charAt(0).toUpperCase()}
+                          {responseInitial(item)}
                         </span>
 
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold text-ink-900">
-                            {item.name}
+                            {responseTitle(item)}
                           </p>
                           <p className="truncate text-xs text-ink-500">
-                            {item.email}
+                            {item.email.trim() ||
+                              new Date(item.createdAt).toLocaleString("pt-BR", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              })}
                           </p>
                         </div>
 

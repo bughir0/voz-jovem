@@ -359,15 +359,15 @@ function toResponse(row: Row): StoredResponse {
 }
 
 export async function insertResponse(data: {
-  name: string;
-  email: string;
   answers: Answers;
 }): Promise<StoredResponse> {
   const db = await connect();
   const record: StoredResponse = {
-    ...data,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
+    name: "",
+    email: "",
+    answers: data.answers,
   };
 
   await db.execute({

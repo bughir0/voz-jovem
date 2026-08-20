@@ -18,7 +18,7 @@ export function Hero({
       title: `${total} ${total === 1 ? "pergunta" : "perguntas"}`,
       text: "Cerca de 3 minutos para responder",
     },
-    { title: "Dados protegidos", text: "Usados apenas nesta pesquisa" },
+    { title: "Resposta anônima", text: "Não pedimos nome nem e-mail" },
     { title: "Resultado público", text: "Define as prioridades do projeto" },
   ];
 

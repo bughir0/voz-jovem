@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AlertIcon, SpinnerIcon } from "@/components/icons";
+import { FORM_STATUS_CHANNEL } from "@/lib/form-status-sync";
 import {
   FORM_STATUSES,
   FORM_STATUS_HINTS,
@@ -52,6 +53,9 @@ export function FormStatusControl({ status }: { status: FormStatus }) {
         body: JSON.stringify({ status: next }),
       });
       if (!response.ok) throw new Error();
+      const channel = new BroadcastChannel(FORM_STATUS_CHANNEL);
+      channel.postMessage(next);
+      channel.close();
       router.refresh();
     } catch {
       setCurrent(previous);

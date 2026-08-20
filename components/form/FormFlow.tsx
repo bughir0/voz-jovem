@@ -11,13 +11,9 @@ import {
   SpinnerIcon,
 } from "@/components/icons";
 import { Hero } from "./Hero";
-import { TextField } from "./Field";
 import { ProgressBar } from "./ProgressBar";
-import { QuestionShell } from "./QuestionShell";
 import { QuestionStep } from "./QuestionStep";
 import { SuccessScreen } from "./SuccessScreen";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 const slide = {
   enter: (direction: number) => ({ opacity: 0, x: direction > 0 ? 40 : -40 }),
@@ -70,19 +66,14 @@ function Actions({
   );
 }
 
-/** A etapa 0 é a identificação; as seguintes são as perguntas cadastradas. */
 export function FormFlow({ questions }: { questions: Question[] }) {
   const [phase, setPhase] = useState<"intro" | "form" | "done">("intro");
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [identity, setIdentity] = useState({ name: "", email: "" });
   const [answers, setAnswers] = useState<Answers>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submittedName, setSubmittedName] = useState("");
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const totalSteps = questions.length + 1;
 
   useEffect(() => {
     return () => {
@@ -91,15 +82,14 @@ export function FormFlow({ questions }: { questions: Question[] }) {
   }, []);
 
   const questionAt = useCallback(
-    (index: number): Question | null =>
-      index >= 1 && index <= questions.length ? questions[index - 1] : null,
+    (index: number): Question | null => questions[index] ?? null,
     [questions],
   );
 
   const isApplicable = useCallback(
     (index: number, data: Answers) => {
       const question = questionAt(index);
-      if (!question) return index === 0;
+      if (!question) return false;
       return isQuestionApplicable(question, questions, data);
     },
     [questionAt, questions],
@@ -107,53 +97,39 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const validate = useCallback(
     (index: number, data: Answers): string | null => {
-      if (index === 0) {
-        if (identity.name.trim().length < 2) return "Escreva seu nome completo.";
-        if (!EMAIL_PATTERN.test(identity.email.trim()))
-          return "Digite um e-mail válido, por exemplo: nome@email.com";
-        return null;
-      }
       const question = questionAt(index);
       if (!question || !isApplicable(index, data)) return null;
       return validateAnswer(question, data[question.id], data);
     },
-    [identity.email, identity.name, isApplicable, questionAt],
+    [isApplicable, questionAt],
   );
 
-  const submit = useCallback(
-    async (data: Answers) => {
-      setSubmitting(true);
-      setError(null);
-      try {
-        const response = await fetch("/api/responses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: identity.name,
-            email: identity.email,
-            answers: data,
-          }),
-        });
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          throw new Error(
-            body?.error ?? "Não foi possível enviar sua resposta.",
-          );
-        }
-        setSubmittedName(identity.name);
-        setPhase("done");
-      } catch (submitError) {
-        setError(
-          submitError instanceof Error
-            ? submitError.message
-            : "Não foi possível enviar sua resposta.",
+  const submit = useCallback(async (data: Answers) => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: data }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(
+          body?.error ?? "Não foi possível enviar sua resposta.",
         );
-      } finally {
-        setSubmitting(false);
       }
-    },
-    [identity.email, identity.name],
-  );
+      setPhase("done");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Não foi possível enviar sua resposta.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, []);
 
   const goNext = useCallback(
     (data: Answers = answers, from: number = step) => {
@@ -164,9 +140,9 @@ export function FormFlow({ questions }: { questions: Question[] }) {
       }
 
       let next = from + 1;
-      while (next <= questions.length && !isApplicable(next, data)) next += 1;
+      while (next < questions.length && !isApplicable(next, data)) next += 1;
 
-      if (next > questions.length) {
+      if (next >= questions.length) {
         void submit(data);
         return;
       }
@@ -184,7 +160,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
       return;
     }
     let previous = step - 1;
-    while (previous >= 1 && !isApplicable(previous, answers)) previous -= 1;
+    while (previous >= 0 && !isApplicable(previous, answers)) previous -= 1;
     setError(null);
     setDirection(-1);
     setStep(Math.max(previous, 0));
@@ -257,7 +233,6 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const restart = useCallback(() => {
     setAnswers({});
-    setIdentity({ name: "", email: "" });
     setStep(0);
     setDirection(1);
     setError(null);
@@ -266,14 +241,14 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const current = questionAt(step);
   const isLast = useMemo(() => {
-    for (let index = step + 1; index <= questions.length; index += 1) {
+    for (let index = step + 1; index < questions.length; index += 1) {
       if (isApplicable(index, answers)) return false;
     }
     return true;
   }, [answers, isApplicable, questions.length, step]);
 
   if (phase === "done") {
-    return <SuccessScreen name={submittedName} onRestart={restart} />;
+    return <SuccessScreen onRestart={restart} />;
   }
 
   if (phase === "intro") {
@@ -286,12 +261,8 @@ export function FormFlow({ questions }: { questions: Question[] }) {
         <div className="mx-auto w-full max-w-2xl px-4 py-3 sm:px-6 sm:py-4">
           <ProgressBar
             current={step + 1}
-            total={totalSteps}
-            label={
-              step === 0
-                ? "Identificação"
-                : `Pergunta ${step} de ${questions.length}`
-            }
+            total={questions.length}
+            label={`Pergunta ${step + 1} de ${questions.length}`}
             onSelect={(index) => {
               setDirection(-1);
               setStep(index);
@@ -317,48 +288,16 @@ export function FormFlow({ questions }: { questions: Question[] }) {
               exit="exit"
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              {step === 0 ? (
-                <QuestionShell
-                  number={1}
-                  total={totalSteps}
-                  title="Antes de começar, quem é você?"
-                  hint="Nome e e-mail são obrigatórios e ficam visíveis apenas para a organização da pesquisa."
-                >
-                  <div className="space-y-4">
-                    <TextField
-                      label="Nome completo"
-                      value={identity.name}
-                      onChange={(value) => {
-                        setIdentity((prev) => ({ ...prev, name: value }));
-                        setError(null);
-                      }}
-                      placeholder="Ex.: Maria Oliveira"
-                      autoFocus
-                    />
-                    <TextField
-                      label="E-mail"
-                      type="email"
-                      value={identity.email}
-                      onChange={(value) => {
-                        setIdentity((prev) => ({ ...prev, email: value }));
-                        setError(null);
-                      }}
-                      placeholder="Ex.: maria@email.com"
-                    />
-                  </div>
-                </QuestionShell>
-              ) : (
-                current && (
-                  <QuestionStep
-                    question={current}
-                    number={step + 1}
-                    total={totalSteps}
-                    answers={answers}
-                    answer={answers[current.id]}
-                    onChange={(answer) => handleChange(current, answer)}
-                    onPick={(answer) => handlePick(current, answer, step)}
-                  />
-                )
+              {current && (
+                <QuestionStep
+                  question={current}
+                  number={step + 1}
+                  total={questions.length}
+                  answers={answers}
+                  answer={answers[current.id]}
+                  onChange={(answer) => handleChange(current, answer)}
+                  onPick={(answer) => handlePick(current, answer, step)}
+                />
               )}
             </motion.div>
           </AnimatePresence>

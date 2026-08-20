@@ -3,15 +3,7 @@
 import { motion } from "motion/react";
 import { Confetti } from "./Confetti";
 
-export function SuccessScreen({
-  name,
-  onRestart,
-}: {
-  name: string;
-  onRestart: () => void;
-}) {
-  const firstName = name.trim().split(/\s+/)[0] ?? "";
-
+export function SuccessScreen({ onRestart }: { onRestart: () => void }) {
   return (
     <>
       <Confetti />
@@ -49,7 +41,7 @@ export function SuccessScreen({
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="display mt-8 text-[clamp(1.75rem,6vw,2.75rem)]"
           >
-            Resposta enviada{firstName ? `, ${firstName}` : ""}
+            Resposta enviada
           </motion.h2>
 
           <motion.p
@@ -59,7 +51,8 @@ export function SuccessScreen({
             className="mx-auto mt-4 max-w-md leading-relaxed text-brand-200"
           >
             Obrigado por participar. Sua opinião entra agora no relatório da
-            pesquisa e vai ajudar a definir quais problemas serão priorizados.
+            pesquisa, sem nome nem e-mail, e vai ajudar a definir quais
+            problemas serão priorizados.
           </motion.p>
 
           <motion.button

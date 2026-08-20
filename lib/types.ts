@@ -112,15 +112,25 @@ export type Answers = Record<string, Answer>;
 export type StoredResponse = {
   id: string;
   createdAt: string;
+  /** Respostas antigas ainda podem ter nome; as novas chegam vazias. */
   name: string;
   email: string;
   answers: Answers;
 };
 
 export type FormPayload = {
-  name: string;
-  email: string;
   answers: Answers;
 };
+
+export const ANONYMOUS_LABEL = "Resposta anônima";
+
+export function responseTitle(response: { name: string }): string {
+  return response.name.trim() || ANONYMOUS_LABEL;
+}
+
+export function responseInitial(response: { name: string }): string {
+  const name = response.name.trim();
+  return name ? name.charAt(0).toUpperCase() : "A";
+}
 
 export const OTHER_CHOICE = "Outro";

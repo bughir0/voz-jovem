@@ -195,8 +195,6 @@ function buildColumns(questions: Question[]): CsvColumn[] {
       header: "Hora",
       value: (response) => csvTime.format(new Date(response.createdAt)),
     },
-    { header: "Nome", value: (response) => response.name },
-    { header: "E-mail", value: (response) => response.email },
   ];
 
   questions.forEach((question, index) => {

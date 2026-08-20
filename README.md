@@ -8,7 +8,7 @@ administrativo com relatórios gráficos e visualização de respostas individua
 **Formulário público (`/`)**
 
 - Tela de abertura animada e uma pergunta por vez, com transições suaves.
-- Nome e e-mail obrigatórios antes das perguntas.
+- Pesquisa anônima: não pede nome nem e-mail.
 - As 11 perguntas da pesquisa, incluindo:
   - marcação de até 3 problemas na pergunta 3;
   - pergunta 4 mostrando **apenas** os problemas que a pessoa marcou na 3,
@@ -25,8 +25,8 @@ administrativo com relatórios gráficos e visualização de respostas individua
 - Login por senha (cookie de sessão assinado, válido por 8 horas).
 - Situação do formulário em três estados: **aberto**, **pausado** (interrupção
   temporária) e **fechado** (coleta encerrada). Fora do estado aberto o painel
-  mostra um aviso destacado, a página pública exibe o recado no lugar do
-  formulário e a API recusa novos envios.
+  mostra um aviso destacado, a página pública troca sozinha para o recado
+  (e volta ao formulário quando reabre) e a API recusa novos envios.
 - Indicadores: total de respostas, gravidade média, % de afetados diretamente e
   % que participariam de um projeto.
 - Destaque do problema eleito como prioridade.
@@ -34,12 +34,12 @@ administrativo com relatórios gráficos e visualização de respostas individua
   ocupação, afetados, escala de gravidade, percepção sobre ações da comunidade,
   disposição para participar e volume de respostas por dia.
 - Lista de todas as sugestões escritas (pergunta 8).
-- Respostas individuais com busca por nome, e-mail ou problema.
+- Respostas individuais com busca pelo conteúdo.
 - Página de resposta individual com todas as perguntas, opção de imprimir/salvar
   em PDF e de excluir.
 - Exportação de todas as respostas em CSV, uma linha por participante, com data e
-  hora separadas (fuso de São Paulo), coluna própria para cada texto de "Outro" e
-  colunas que abrem alinhadas no Excel.
+  hora separadas (fuso de São Paulo), sem nome nem e-mail, coluna própria para
+  cada texto de "Outro" e colunas que abrem alinhadas no Excel.
 
 ## Como rodar
 

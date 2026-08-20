@@ -34,9 +34,7 @@ export function ProgressBar({ current, total, label, onSelect }: Props) {
               type="button"
               disabled={!visited}
               onClick={() => onSelect?.(index)}
-              aria-label={
-                index === 0 ? "Identificação" : `Ir para a pergunta ${index}`
-              }
+              aria-label={`Ir para a pergunta ${index + 1}`}
               className="group h-4 flex-1 disabled:cursor-default"
             >
               <span className="block h-1 w-full overflow-hidden rounded-full bg-line transition-colors group-enabled:group-hover:bg-brand-200">

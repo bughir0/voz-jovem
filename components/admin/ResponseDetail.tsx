@@ -6,6 +6,8 @@ import { useState } from "react";
 import { scaleValues } from "@/lib/question-utils";
 import {
   OTHER_CHOICE,
+  responseInitial,
+  responseTitle,
   type Answer,
   type Question,
   type StoredResponse,
@@ -187,11 +189,17 @@ export function ResponseDetail({
     >
       <header className="flex flex-wrap items-start gap-4 border-b border-line pb-6">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-brand-50 text-lg font-semibold text-brand-700">
-          {response.name.trim().charAt(0).toUpperCase()}
+          {responseInitial(response)}
         </span>
         <div className="min-w-[12rem] flex-1">
-          <h1 className="display text-2xl text-ink-900">{response.name}</h1>
-          <p className="text-sm text-ink-500">{response.email}</p>
+          <h1 className="display text-2xl text-ink-900">
+            {responseTitle(response)}
+          </h1>
+          {response.email.trim() ? (
+            <p className="text-sm text-ink-500">{response.email}</p>
+          ) : (
+            <p className="text-sm text-ink-500">Sem identificação pessoal</p>
+          )}
         </div>
         <p className="text-xs text-ink-400">
           Enviada em{" "}
