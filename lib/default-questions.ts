@@ -7,6 +7,7 @@ import type { Question } from "./types";
  */
 export const DEFAULT_QUESTION_IDS = {
   ageRange: "q-faixa-etaria",
+  course: "q-curso",
   occupation: "q-ocupacao",
   problems: "q-problemas",
   mainProblem: "q-problema-principal",
@@ -72,8 +73,28 @@ export const DEFAULT_QUESTIONS: Question[] = [
   },
   {
     ...base,
-    id: DEFAULT_QUESTION_IDS.occupation,
+    id: DEFAULT_QUESTION_IDS.course,
     position: 2,
+    type: "single",
+    title: "Qual curso você está fazendo?",
+    hint: "Se o seu curso não estiver na lista, marque Outro e escreva o nome.",
+    options: [
+      "Serviços administrativos",
+      "Serviços administrativos em instituições de saúde",
+      "Aprendizagem em supermercado",
+      "Aprendizagem em vendas",
+      "Aprendizagem técnica em informática",
+      "Aprendizagem em farmácia",
+      "Aprendizagem em postos",
+      "Aprendizagem em asseio e conservação",
+      "Aprendizagem técnica em logística",
+    ],
+    allowOther: true,
+  },
+  {
+    ...base,
+    id: DEFAULT_QUESTION_IDS.occupation,
+    position: 3,
     type: "single",
     title: "Atualmente você:",
     options: [
@@ -87,7 +108,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.problems,
-    position: 3,
+    position: 4,
     type: "multiple",
     title: "Na sua opinião, quais problemas mais afetam os jovens atualmente?",
     hint: "Marque até 3 opções.",
@@ -98,7 +119,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.mainProblem,
-    position: 4,
+    position: 5,
     type: "derived",
     title: "Dentre os problemas que você marcou, qual é o MAIS preocupante?",
     hint: "Apenas uma resposta. É ela que define a prioridade do projeto.",
@@ -107,7 +128,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.affected,
-    position: 5,
+    position: 6,
     type: "single",
     title: "Você já foi afetado diretamente por esse problema?",
     options: ["Sim", "Não", "Prefiro não responder"],
@@ -115,7 +136,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.severity,
-    position: 6,
+    position: 7,
     type: "scale",
     title:
       "Quanto você acredita que esse problema prejudica a vida dos jovens?",
@@ -127,7 +148,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.enoughActions,
-    position: 7,
+    position: 8,
     type: "single",
     title:
       "Você acredita que existem ações suficientes para enfrentar esse problema na sua comunidade?",
@@ -136,7 +157,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.suggestion,
-    position: 8,
+    position: 9,
     type: "text",
     title: "O que você acha que poderia ser feito para melhorar essa situação?",
     hint: "Queremos ouvir você! Se preferir, pode deixar em branco e continuar.",
@@ -145,7 +166,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.infoSources,
-    position: 9,
+    position: 10,
     type: "multiple",
     title:
       "Onde você costuma buscar informações sobre assuntos que afetam os jovens?",
@@ -164,7 +185,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.priorityAreas,
-    position: 10,
+    position: 11,
     type: "multiple",
     title:
       "Quais áreas você considera mais importantes para melhorar a vida dos jovens?",
@@ -187,7 +208,7 @@ export const DEFAULT_QUESTIONS: Question[] = [
   {
     ...base,
     id: DEFAULT_QUESTION_IDS.outreach,
-    position: 11,
+    position: 12,
     type: "single",
     title:
       "Na sua opinião, qual seria a melhor forma de um projeto chegar até os jovens?",

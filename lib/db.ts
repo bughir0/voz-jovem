@@ -84,11 +84,11 @@ CREATE TABLE IF NOT EXISTS submit_keys (
 // O módulo é reavaliado a cada hot-reload do Next em desenvolvimento; guardar a
 // conexão no globalThis evita abrir dezenas de handles no mesmo arquivo SQLite.
 // O sufixo de versão descarta conexões antigas quando o esquema muda.
-const cache = globalThis as unknown as { __vozJovemDbV4?: Promise<Client> };
+const cache = globalThis as unknown as { __vozJovemDbV5?: Promise<Client> };
 
 function connect(): Promise<Client> {
-  if (!cache.__vozJovemDbV4) {
-    cache.__vozJovemDbV4 = (async () => {
+  if (!cache.__vozJovemDbV5) {
+    cache.__vozJovemDbV5 = (async () => {
       const client = buildClient();
       await client.execute(SCHEMA_QUESTIONS);
       await client.execute(SCHEMA_RESPONSES);
@@ -102,15 +102,28 @@ function connect(): Promise<Client> {
       return client;
     })();
   }
-  return cache.__vozJovemDbV4;
+  return cache.__vozJovemDbV5;
 }
 
 async function seedQuestions(client: Client): Promise<void> {
-  const existing = await client.execute("SELECT COUNT(*) AS total FROM questions");
-  if (Number(existing.rows[0]?.total ?? 0) > 0) return;
+  const existing = await client.execute("SELECT id FROM questions");
+  const ids = new Set(existing.rows.map((row) => String(row.id)));
+
+  if (ids.size === 0) {
+    for (const question of DEFAULT_QUESTIONS) {
+      await insertQuestionRow(client, question);
+    }
+    return;
+  }
 
   for (const question of DEFAULT_QUESTIONS) {
+    if (ids.has(question.id)) continue;
+    await client.execute({
+      sql: "UPDATE questions SET position = position + 1 WHERE position >= ?",
+      args: [question.position],
+    });
     await insertQuestionRow(client, question);
+    ids.add(question.id);
   }
 }
 

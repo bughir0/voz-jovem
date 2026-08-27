@@ -9,13 +9,14 @@ administrativo com relatórios gráficos e visualização de respostas individua
 
 - Tela de abertura animada e uma pergunta por vez, com transições suaves.
 - Pesquisa anônima: não pede nome nem e-mail.
-- As 11 perguntas da pesquisa, incluindo:
-  - marcação de até 3 problemas na pergunta 3;
-  - pergunta 4 mostrando **apenas** os problemas que a pessoa marcou na 3,
+- As 12 perguntas da pesquisa, incluindo:
+  - curso que a pessoa está fazendo;
+  - marcação de até 3 problemas na pergunta 4;
+  - pergunta 5 mostrando **apenas** os problemas que a pessoa marcou na 4,
     aceitando uma única resposta (é ela que define a prioridade);
-  - campos "Outro" com texto livre nas perguntas 2 e 3;
-  - escala animada de 1 a 5 na pergunta 6;
-  - pergunta 8 aberta e opcional.
+  - campos "Outro" com texto livre nas perguntas 2, 3 e 4;
+  - escala animada de 1 a 5 na pergunta 7;
+  - pergunta 9 aberta e opcional.
 - Avanço automático ao escolher uma alternativa, navegação por Enter, botão
   voltar e barra de progresso.
 - Tela final com confete e opção de enviar outra resposta.
@@ -33,7 +34,7 @@ administrativo com relatórios gráficos e visualização de respostas individua
 - Gráficos: problemas mais citados, problema mais preocupante, faixa etária,
   ocupação, afetados, escala de gravidade, percepção sobre ações da comunidade,
   disposição para participar e volume de respostas por dia.
-- Lista de todas as sugestões escritas (pergunta 8).
+- Lista de todas as sugestões escritas (pergunta 9).
 - Respostas individuais com busca pelo conteúdo.
 - Página de resposta individual com todas as perguntas, opção de imprimir/salvar
   em PDF e de excluir.
