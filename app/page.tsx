@@ -1,14 +1,16 @@
 import { PublicSurvey } from "@/components/form/PublicSurvey";
-import { getFormStatus, listQuestions } from "@/lib/db";
+import { getSurveySnapshot } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const [questions, status] = await Promise.all([
-    listQuestions(),
-    getFormStatus(),
-  ]);
+  const snapshot = await getSurveySnapshot();
 
-  return <PublicSurvey questions={questions} initialStatus={status} />;
+  return (
+    <PublicSurvey
+      questions={snapshot.questions}
+      initialStatus={snapshot.status}
+    />
+  );
 }

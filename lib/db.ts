@@ -4,6 +4,7 @@ import path from "node:path";
 import { DEFAULT_QUESTIONS, DEFAULT_QUESTION_IDS } from "./default-questions";
 import {
   isFormStatus,
+  questionsRevision,
   type Answers,
   type FormStatus,
   type Question,
@@ -468,6 +469,18 @@ async function readSetting(key: string): Promise<string | null> {
 export async function getFormStatus(): Promise<FormStatus> {
   const stored = await readSetting(FORM_STATUS_KEY);
   return isFormStatus(stored) ? stored : "open";
+}
+
+export async function getSurveySnapshot(): Promise<{
+  status: FormStatus;
+  revision: string;
+  questions: Question[];
+}> {
+  const [status, questions] = await Promise.all([
+    getFormStatus(),
+    listQuestions(),
+  ]);
+  return { status, questions, revision: questionsRevision(questions) };
 }
 
 export async function setFormStatus(status: FormStatus): Promise<void> {

@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { getFormStatus } from "@/lib/db";
+import { getSurveySnapshot } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-/** Situação atual do formulário, sem login — o site público consulta daqui. */
+/** Situação e perguntas atuais — o site público consulta daqui. */
 export async function GET() {
-  return NextResponse.json(
-    { status: await getFormStatus() },
-    { headers: { "Cache-Control": "no-store, max-age=0" } },
-  );
+  return NextResponse.json(await getSurveySnapshot(), {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+      Pragma: "no-cache",
+    },
+  });
 }

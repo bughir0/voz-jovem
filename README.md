@@ -26,8 +26,10 @@ administrativo com relatórios gráficos e visualização de respostas individua
 - Login por senha (cookie de sessão assinado, válido por 8 horas).
 - Situação do formulário em três estados: **aberto**, **pausado** (interrupção
   temporária) e **fechado** (coleta encerrada). Fora do estado aberto o painel
-  mostra um aviso destacado, a página pública troca sozinha para o recado
-  (e volta ao formulário quando reabre) e a API recusa novos envios.
+  mostra um aviso destacado. Quem já estiver respondendo vê o recado em
+  poucos segundos, a API recusa o envio e o formulário volta quando reabre.
+  Se uma pergunta for adicionada ou removida, quem está preenchendo vê um
+  aviso e o formulário recomeça do início.
 - Indicadores: total de respostas, gravidade média, % de afetados diretamente e
   % que participariam de um projeto.
 - Destaque do problema eleito como prioridade.

@@ -1,62 +1,19 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
-import { FORM_STATUS_CHANNEL } from "@/lib/form-status-sync";
+import { useEffect, useRef, useState } from "react";
 import {
   FORM_STATUS_NOTICE,
-  isFormStatus,
+  questionsRevision,
   type FormStatus,
   type Question,
 } from "@/lib/types";
+import { useLiveSurvey } from "@/lib/use-live-survey";
 import { FormFlow } from "./FormFlow";
+import { QuestionsChangedModal } from "./QuestionsChangedModal";
 import { StatusNotice } from "./StatusNotice";
 
-const POLL_MS = 4000;
-
-function useLiveFormStatus(initial: FormStatus): FormStatus {
-  const [status, setStatus] = useState(initial);
-
-  useEffect(() => setStatus(initial), [initial]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function refresh() {
-      try {
-        const response = await fetch("/api/form-status", { cache: "no-store" });
-        const body = (await response.json()) as { status?: unknown };
-        if (!cancelled && isFormStatus(body.status)) setStatus(body.status);
-      } catch {
-        // Sem rede, mantém o último estado conhecido.
-      }
-    }
-
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refresh();
-    }, POLL_MS);
-
-    function onVisible() {
-      if (document.visibilityState === "visible") void refresh();
-    }
-
-    const channel = new BroadcastChannel(FORM_STATUS_CHANNEL);
-    channel.onmessage = (event: MessageEvent<unknown>) => {
-      if (isFormStatus(event.data)) setStatus(event.data);
-    };
-
-    document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisible);
-      channel.close();
-    };
-  }, []);
-
-  return status;
-}
+const AUTO_RESTART_MS = 4000;
 
 export function PublicSurvey({
   questions,
@@ -65,13 +22,32 @@ export function PublicSurvey({
   questions: Question[];
   initialStatus: FormStatus;
 }) {
-  const status = useLiveFormStatus(initialStatus);
+  const initialRevision = questionsRevision(questions);
+  const live = useLiveSurvey({
+    status: initialStatus,
+    questions,
+    revision: initialRevision,
+  });
+
+  const [shown, setShown] = useState(live);
+  const liveRef = useRef(live);
+  liveRef.current = live;
+  const pending = live.revision !== shown.revision;
+
+  useEffect(() => {
+    if (!pending) return;
+    const timer = window.setTimeout(
+      () => setShown(liveRef.current),
+      AUTO_RESTART_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [live.revision, pending]);
 
   let screen: React.ReactNode;
-  if (status !== "open") {
-    const notice = FORM_STATUS_NOTICE[status];
+  if (shown.status !== "open") {
+    const notice = FORM_STATUS_NOTICE[shown.status];
     screen = <StatusNotice title={notice.title} text={notice.text} />;
-  } else if (questions.length === 0) {
+  } else if (shown.questions.length === 0) {
     screen = (
       <StatusNotice
         title="A pesquisa está sendo preparada"
@@ -81,22 +57,32 @@ export function PublicSurvey({
   } else {
     screen = (
       <main>
-        <FormFlow questions={questions} />
+        <FormFlow
+          key={shown.revision}
+          questions={shown.questions}
+          formStatus={live.status}
+        />
       </main>
     );
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={status}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.28 }}
-      >
-        {screen}
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`${shown.status}:${shown.revision}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.28 }}
+        >
+          {screen}
+        </motion.div>
+      </AnimatePresence>
+
+      {pending && live.status === "open" && (
+        <QuestionsChangedModal onRestart={() => setShown(live)} />
+      )}
+    </>
   );
 }

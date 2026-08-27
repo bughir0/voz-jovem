@@ -58,6 +58,10 @@ export const FORM_STATUS_NOTICE: Record<
   },
 };
 
+export function questionsRevision(questions: { id: string }[]): string {
+  return questions.map((question) => question.id).join("|");
+}
+
 export function isFormStatus(value: unknown): value is FormStatus {
   return FORM_STATUSES.includes(value as FormStatus);
 }

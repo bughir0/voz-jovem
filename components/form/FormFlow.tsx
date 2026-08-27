@@ -3,7 +3,13 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isQuestionApplicable, validateAnswer } from "@/lib/question-utils";
-import type { Answer, Answers, Question } from "@/lib/types";
+import {
+  FORM_STATUS_NOTICE,
+  type Answer,
+  type Answers,
+  type FormStatus,
+  type Question,
+} from "@/lib/types";
 import {
   AlertIcon,
   ArrowLeftIcon,
@@ -13,6 +19,7 @@ import {
 import { Hero } from "./Hero";
 import { ProgressBar } from "./ProgressBar";
 import { QuestionStep } from "./QuestionStep";
+import { StatusNotice } from "./StatusNotice";
 import { SuccessScreen } from "./SuccessScreen";
 
 const slide = {
@@ -66,7 +73,14 @@ function Actions({
   );
 }
 
-export function FormFlow({ questions }: { questions: Question[] }) {
+export function FormFlow({
+  questions,
+  formStatus,
+}: {
+  questions: Question[];
+  formStatus: FormStatus;
+}) {
+  const formStatusRef = useRef(formStatus);
   const [phase, setPhase] = useState<"intro" | "form" | "done">("intro");
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -76,6 +90,10 @@ export function FormFlow({ questions }: { questions: Question[] }) {
   const submittingRef = useRef(false);
   const submitKey = useRef(crypto.randomUUID());
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    formStatusRef.current = formStatus;
+  }, [formStatus]);
 
   useEffect(() => {
     return () => {
@@ -107,6 +125,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
   );
 
   const submit = useCallback(async (data: Answers) => {
+    if (formStatusRef.current !== "open") return;
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
@@ -142,7 +161,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const goNext = useCallback(
     (data: Answers = answers, from: number = step) => {
-      if (submittingRef.current) return;
+      if (formStatusRef.current !== "open" || submittingRef.current) return;
       const message = validate(from, data);
       if (message) {
         setError(message);
@@ -215,7 +234,7 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   const handlePick = useCallback(
     (question: Question, answer: Answer, index: number) => {
-      if (submittingRef.current) return;
+      if (formStatusRef.current !== "open" || submittingRef.current) return;
       const next = merge(answers, question, answer);
       setAnswers(next);
       setError(null);
@@ -263,6 +282,11 @@ export function FormFlow({ questions }: { questions: Question[] }) {
 
   if (phase === "done") {
     return <SuccessScreen onRestart={restart} />;
+  }
+
+  if (formStatus !== "open") {
+    const notice = FORM_STATUS_NOTICE[formStatus];
+    return <StatusNotice title={notice.title} text={notice.text} />;
   }
 
   if (phase === "intro") {
