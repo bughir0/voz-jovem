@@ -37,12 +37,14 @@ administrativo com relatórios gráficos e visualização de respostas individua
   ocupação, afetados, escala de gravidade, percepção sobre ações da comunidade,
   disposição para participar e volume de respostas por dia.
 - Lista de todas as sugestões escritas (pergunta 9).
-- Respostas individuais com busca pelo conteúdo.
+- Respostas individuais com busca pelo conteúdo e filtro pelo curso marcado
+  no formulário. O filtro vale para os gráficos, a lista e a exportação CSV.
 - Página de resposta individual com todas as perguntas, opção de imprimir/salvar
   em PDF e de excluir.
 - Exportação de todas as respostas em CSV, uma linha por participante, com data e
   hora separadas (fuso de São Paulo), sem nome nem e-mail, coluna própria para
-  cada texto de "Outro" e colunas que abrem alinhadas no Excel.
+  cada texto de "Outro" e colunas que abrem alinhadas no Excel. Com um curso
+  selecionado no filtro, o arquivo traz só aquele recorte.
 
 ## Como rodar
 

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChartIcon,
   DownloadIcon,
@@ -11,8 +11,15 @@ import {
   SearchIcon,
   UsersIcon,
 } from "@/components/icons";
+import {
+  ALL_COURSES,
+  findCourseQuestion,
+  filterResponsesByCourse,
+  listCourseOptions,
+  responseCourseLabel,
+} from "@/lib/course-filter";
 import { formatAnswer } from "@/lib/question-utils";
-import type { QuestionStats, Slice, Stats } from "@/lib/stats";
+import { buildStats, type QuestionStats, type Slice, type Stats } from "@/lib/stats";
 import {
   QUESTION_TYPE_LABELS,
   responseInitial,
@@ -22,8 +29,11 @@ import {
   type StoredResponse,
 } from "@/lib/types";
 import { Donut, HorizontalBars, Timeline, VerticalBars } from "./Charts";
+import { CourseFilter } from "./CourseFilter";
 import { FormStatusControl } from "./FormStatusControl";
 import { ChartCard, StatCard } from "./StatCard";
+
+const COURSE_FILTER_KEY = "voz-jovem-admin-curso";
 
 type Tab = "relatorio" | "respostas";
 
@@ -107,11 +117,59 @@ export function AdminDashboard({
 }) {
   const [tab, setTab] = useState<Tab>("relatorio");
   const [query, setQuery] = useState("");
+  const [course, setCourse] = useState(ALL_COURSES);
 
   const questions = useMemo(
     () => stats.questions.map((item) => item.question),
     [stats.questions],
   );
+
+  const courseQuestion = useMemo(
+    () => findCourseQuestion(questions),
+    [questions],
+  );
+
+  const courseOptions = useMemo(
+    () =>
+      courseQuestion ? listCourseOptions(responses, courseQuestion) : [],
+    [responses, courseQuestion],
+  );
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(COURSE_FILTER_KEY);
+    if (!stored || !courseQuestion) return;
+    const exists = listCourseOptions(responses, courseQuestion).some(
+      (option) => option.value === stored,
+    );
+    if (exists) setCourse(stored);
+  }, [courseQuestion, responses]);
+
+  function changeCourse(next: string) {
+    setCourse(next);
+    if (next) sessionStorage.setItem(COURSE_FILTER_KEY, next);
+    else sessionStorage.removeItem(COURSE_FILTER_KEY);
+  }
+
+  const scopedResponses = useMemo(
+    () => filterResponsesByCourse(responses, courseQuestion, course),
+    [responses, courseQuestion, course],
+  );
+
+  const scopedStats = useMemo(
+    () => (course ? buildStats(questions, scopedResponses) : stats),
+    [course, questions, scopedResponses, stats],
+  );
+
+  const chartQuestions = useMemo(() => {
+    if (!course || !courseQuestion) return scopedStats.questions;
+    return scopedStats.questions.filter(
+      (item) => item.question.id !== courseQuestion.id,
+    );
+  }, [course, courseQuestion, scopedStats.questions]);
+
+  const exportHref = course
+    ? `/api/admin/export?curso=${encodeURIComponent(course)}`
+    : "/api/admin/export";
 
   /** Pergunta usada como resumo na lista e no destaque do topo. */
   const headline: Question | undefined = useMemo(
@@ -123,19 +181,19 @@ export function AdminDashboard({
     [questions],
   );
 
-  const headlineStats = stats.questions.find(
+  const headlineStats = scopedStats.questions.find(
     (item) => item.question.id === headline?.id,
   );
   const topSlice = headlineStats?.slices[0];
 
-  const scaleQuestions = stats.questions
+  const scaleQuestions = scopedStats.questions
     .filter((item) => item.question.type === "scale" && item.average !== null)
     .slice(0, 2);
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
-    if (!term) return responses;
-    return responses.filter((response) => {
+    if (!term) return scopedResponses;
+    return scopedResponses.filter((response) => {
       const answers = questions
         .map((question) => formatAnswer(question, response.answers[question.id]))
         .join(" ");
@@ -143,7 +201,7 @@ export function AdminDashboard({
         .toLowerCase()
         .includes(term);
     });
-  }, [query, questions, responses]);
+  }, [query, questions, scopedResponses]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
@@ -159,11 +217,17 @@ export function AdminDashboard({
             Relatório da pesquisa
           </h1>
           <p className="mt-1.5 text-sm text-ink-500">
-            {stats.total === 0
-              ? "Nenhuma resposta recebida ainda."
-              : `${stats.total} resposta${stats.total === 1 ? "" : "s"} recebida${
-                  stats.total === 1 ? "" : "s"
-                }.`}
+            {scopedStats.total === 0
+              ? responses.length === 0
+                ? "Nenhuma resposta recebida ainda."
+                : "Nenhuma resposta neste curso."
+              : course
+                ? `${scopedStats.total} de ${responses.length} resposta${
+                    responses.length === 1 ? "" : "s"
+                  } — ${course}.`
+                : `${scopedStats.total} resposta${
+                    scopedStats.total === 1 ? "" : "s"
+                  } recebida${scopedStats.total === 1 ? "" : "s"}.`}
           </p>
         </div>
 
@@ -176,11 +240,12 @@ export function AdminDashboard({
             Ver formulário
           </Link>
           <a
-            href="/api/admin/export"
+            href={exportHref}
             className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-brand-700 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-800"
           >
             <DownloadIcon className="h-4 w-4" />
             Exportar CSV
+            {course ? " do curso" : ""}
           </a>
           <form action="/api/admin/logout" method="post">
             <button
@@ -202,11 +267,27 @@ export function AdminDashboard({
         <FormStatusControl status={formStatus} />
       </motion.div>
 
+      {courseQuestion && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.14, duration: 0.4 }}
+          className="mt-4"
+        >
+          <CourseFilter
+            options={courseOptions}
+            total={responses.length}
+            value={course}
+            onChange={changeCourse}
+          />
+        </motion.div>
+      )}
+
       <div className="mt-8 mb-6 flex gap-6 border-b border-line">
         {(
           [
             ["relatorio", "Resumo e gráficos"],
-            ["respostas", `Respostas (${responses.length})`],
+            ["respostas", `Respostas (${scopedResponses.length})`],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -244,10 +325,10 @@ export function AdminDashboard({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label="Respostas"
-                value={stats.total}
+                value={scopedStats.total}
                 delay={0}
                 icon={<UsersIcon className="h-5 w-5" />}
-                hint="Total de participantes"
+                hint={course ? "Neste curso" : "Total de participantes"}
               />
               <StatCard
                 label="Perguntas no ar"
@@ -271,7 +352,9 @@ export function AdminDashboard({
               {scaleQuestions.length === 0 && (
                 <StatCard
                   label="Respostas hoje"
-                  value={stats.perDay[stats.perDay.length - 1]?.value ?? 0}
+                  value={
+                    scopedStats.perDay[scopedStats.perDay.length - 1]?.value ?? 0
+                  }
                   delay={0.12}
                   icon={<ChartIcon className="h-5 w-5" />}
                   hint="Último dia com registro"
@@ -288,7 +371,7 @@ export function AdminDashboard({
               >
                 <p className="eyebrow text-ink-500">Resposta mais votada</p>
                 <p className="display mt-2 text-[clamp(1.375rem,4vw,1.875rem)] text-ink-900">
-                  {stats.total === 0 || !topSlice
+                  {scopedStats.total === 0 || !topSlice
                     ? "Aguardando respostas"
                     : topSlice.name}
                 </p>
@@ -301,7 +384,17 @@ export function AdminDashboard({
               </motion.div>
             )}
 
-            {stats.questions.length === 0 ? (
+            {scopedStats.total === 0 && responses.length > 0 ? (
+              <div className="card rounded-xl px-6 py-14 text-center">
+                <p className="font-semibold text-ink-700">
+                  Nenhuma resposta neste curso
+                </p>
+                <p className="mt-2 text-sm text-ink-500">
+                  Escolha outro curso ou limpe o filtro para ver o relatório
+                  completo.
+                </p>
+              </div>
+            ) : chartQuestions.length === 0 ? (
               <div className="card rounded-xl px-6 py-14 text-center">
                 <p className="font-semibold text-ink-700">
                   Nenhuma pergunta publicada
@@ -318,38 +411,40 @@ export function AdminDashboard({
                 </p>
               </div>
             ) : (
-              <div className="grid gap-5 lg:grid-cols-2">
-                {stats.questions.map((item, index) => {
-                  const wide =
-                    item.question.type === "multiple" ||
-                    item.question.type === "derived" ||
-                    item.question.type === "text";
+              <>
+                <div className="grid gap-5 lg:grid-cols-2">
+                  {chartQuestions.map((item, index) => {
+                    const wide =
+                      item.question.type === "multiple" ||
+                      item.question.type === "derived" ||
+                      item.question.type === "text";
 
-                  return (
-                    <ChartCard
-                      key={item.question.id}
-                      title={item.question.title}
-                      subtitle={subtitleFor(item, index)}
-                      delay={Math.min(index, 6) * 0.04}
-                      className={wide ? "lg:col-span-2" : ""}
-                    >
-                      {item.question.type === "text" ? (
-                        <TextAnswers item={item} />
-                      ) : (
-                        <QuestionChart item={item} />
-                      )}
-                    </ChartCard>
-                  );
-                })}
-              </div>
+                    return (
+                      <ChartCard
+                        key={item.question.id}
+                        title={item.question.title}
+                        subtitle={subtitleFor(item, index)}
+                        delay={Math.min(index, 6) * 0.04}
+                        className={wide ? "lg:col-span-2" : ""}
+                      >
+                        {item.question.type === "text" ? (
+                          <TextAnswers item={item} />
+                        ) : (
+                          <QuestionChart item={item} />
+                        )}
+                      </ChartCard>
+                    );
+                  })}
+                </div>
+
+                <ChartCard
+                  title="Respostas por dia"
+                  subtitle="Volume de participação ao longo do tempo"
+                >
+                  <Timeline data={scopedStats.perDay} />
+                </ChartCard>
+              </>
             )}
-
-            <ChartCard
-              title="Respostas por dia"
-              subtitle="Volume de participação ao longo do tempo"
-            >
-              <Timeline data={stats.perDay} />
-            </ChartCard>
           </motion.div>
         ) : (
           <motion.div
@@ -373,7 +468,9 @@ export function AdminDashboard({
               <p className="card rounded-xl px-6 py-14 text-center text-sm text-ink-400">
                 {responses.length === 0
                   ? "Nenhuma resposta recebida ainda."
-                  : "Nenhuma resposta encontrada para essa busca."}
+                  : query.trim()
+                    ? "Nenhuma resposta encontrada para essa busca."
+                    : "Nenhuma resposta neste curso."}
               </p>
             ) : (
               <ul className="space-y-3">
@@ -398,11 +495,16 @@ export function AdminDashboard({
                             {responseTitle(item)}
                           </p>
                           <p className="truncate text-xs text-ink-500">
-                            {item.email.trim() ||
-                              new Date(item.createdAt).toLocaleString("pt-BR", {
-                                dateStyle: "short",
-                                timeStyle: "short",
-                              })}
+                            {courseQuestion
+                              ? responseCourseLabel(item, courseQuestion)
+                              : item.email.trim() ||
+                                new Date(item.createdAt).toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    dateStyle: "short",
+                                    timeStyle: "short",
+                                  },
+                                )}
                           </p>
                         </div>
 
